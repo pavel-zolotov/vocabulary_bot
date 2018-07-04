@@ -42,14 +42,13 @@ public class Bot extends TelegramLongPollingBot {
         return BotConfig.TOKEN;
     }
 
-    @SuppressWarnings("deprecation")
     private void handleIncomingMessage(Message msg) {
         SendMessage s = new SendMessage();
         s.setChatId(msg.getChatId());
         try {
             s.setText(Translator.translate("ru", msg.getText()));
             try {
-                sendMessage(s);
+                execute(s);
             } catch (TelegramApiException e) {
                 e.printStackTrace();
             }
