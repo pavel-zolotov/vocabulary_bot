@@ -1,1 +1,1 @@
-web: java $JAVA_OPTS -cp build/staging:build/staging/* org.qweco.vocabularybot.Bot
+worker: java $JAVA_OPTS -cp build/staging:build/staging/* org.qweco.vocabularybot.Bot
