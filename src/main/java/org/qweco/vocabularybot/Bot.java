@@ -16,18 +16,12 @@ import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.objects.CallbackQuery;
 import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.api.objects.Update;
-import org.telegram.telegrambots.api.objects.inlinequery.InlineQuery;
 import org.telegram.telegrambots.api.objects.inlinequery.inputmessagecontent.InputTextMessageContent;
 import org.telegram.telegrambots.api.objects.inlinequery.result.InlineQueryResultArticle;
 import org.telegram.telegrambots.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboard;
-import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.InlineKeyboardButton;
-import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
-import org.telegram.telegrambots.exceptions.TelegramApiValidationException;
-import org.telegram.telegrambots.logging.BotLogger;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -36,50 +30,13 @@ import java.util.List;
 import java.util.Map;
 
 public class Bot extends TelegramLongPollingBot {
-    final private static String PHRASE_ADD_COMMAND = "➕";
+    final private static String PHRASE_ADD_DATA = "add_to_vocabulary";
 
     public static void main (String[] args){
         ApiContextInitializer.init();
         TelegramBotsApi api = new TelegramBotsApi();
         try {
             api.registerBot(new Bot());
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void onUpdateReceived(Update update) {
-        try {
-            if (update.hasInlineQuery()) {
-                handleIncomingInlineQuery(update.getInlineQuery());
-            } else if (update.hasMessage() && update.getMessage().hasText() && update.getMessage().isUserMessage()) {
-                handleIncomingMessage(update.getMessage());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * For an InlineQuery, adds phrase to user's dictionary
-     * @param inlineQuery InlineQuery received
-     */
-    private void handleIncomingInlineQuery(InlineQuery inlineQuery) {
-        String query = inlineQuery.getQuery();
-        try {
-            if (!query.isEmpty()) {
-                if (query.contains("add_to_vocabulary")) {
-                    AnswerInlineQuery answerInlineQuery = new AnswerInlineQuery();
-                    answerInlineQuery.setInlineQueryId(inlineQuery.getId());
-
-                    InlineQueryResultArticle article = new InlineQueryResultArticle();
-                    article.setInputMessageContent(new InputTextMessageContent().setMessageText("added"));
-                    answerInlineQuery.setResults(article);
-
-                    execute(answerInlineQuery);
-                }
-            }
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
@@ -95,6 +52,39 @@ public class Bot extends TelegramLongPollingBot {
         return BotConfig.TOKEN;
     }
 
+    @Override
+    public void onUpdateReceived(Update update) {
+        try {
+            if (update.hasInlineQuery()) {
+                handleIncomingCallbackQuery(update.getCallbackQuery(), update.getInlineQuery().getId());
+            } else if (update.hasMessage() && update.getMessage().hasText() && update.getMessage().isUserMessage()) {
+                handleIncomingMessage(update.getMessage());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void handleIncomingCallbackQuery(CallbackQuery callbackQuery, String inlineQueryId) {
+        String data = callbackQuery.getData();
+        try {
+            if (!data.isEmpty()) {
+                if (data.equals(PHRASE_ADD_DATA)) {
+                    AnswerInlineQuery answerInlineQuery = new AnswerInlineQuery();
+                    answerInlineQuery.setInlineQueryId(inlineQueryId);
+
+                    InlineQueryResultArticle article = new InlineQueryResultArticle();
+                    article.setInputMessageContent(new InputTextMessageContent().setMessageText("added"));
+                    answerInlineQuery.setResults(article);
+
+                    execute(answerInlineQuery);
+                }
+            }
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
+
     private void handleIncomingMessage(Message msg) {
         SendMessage s = new SendMessage();
         s.setChatId(msg.getChatId());
@@ -107,8 +97,8 @@ public class Bot extends TelegramLongPollingBot {
             List<List<InlineKeyboardButton>> rows = new ArrayList<>();
             List<InlineKeyboardButton> row = new ArrayList<>();
             InlineKeyboardButton button = new InlineKeyboardButton();
-            button.setText(PHRASE_ADD_COMMAND);
-            button.setCallbackData("add_to_vocabulary");
+            button.setText("➕");
+            button.setCallbackData(PHRASE_ADD_DATA);
             row.add(button);
             rows.add(row);
             inlineKeyboardMarkup.setKeyboard(rows);
