@@ -76,9 +76,12 @@ public class Bot extends TelegramLongPollingBot {
                     AnswerCallbackQuery answerCallbackQuery = new AnswerCallbackQuery();
                     answerCallbackQuery.setCallbackQueryId(callbackQuery.getId());
 
-                    BotLogger.debug("test", "click");
-
                     execute(answerCallbackQuery);
+
+                    SendMessage s = new SendMessage();
+                    s.setChatId(callbackQuery.getMessage().getChatId());
+                    s.setText("1");
+                    execute(s);
                 }
             }
         } catch (TelegramApiException e) {
