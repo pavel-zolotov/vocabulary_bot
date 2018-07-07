@@ -69,7 +69,7 @@ public class Bot extends TelegramLongPollingBot {
         String query = inlineQuery.getQuery();
         try {
             if (!query.isEmpty()) {
-                if (query.contains(PHRASE_ADD_COMMAND)) {
+                if (query.contains("add_to_vocabulary")) {
                     AnswerInlineQuery answerInlineQuery = new AnswerInlineQuery();
                     answerInlineQuery.setInlineQueryId(inlineQuery.getId());
 
@@ -108,7 +108,7 @@ public class Bot extends TelegramLongPollingBot {
             List<InlineKeyboardButton> row = new ArrayList<>();
             InlineKeyboardButton button = new InlineKeyboardButton();
             button.setText(PHRASE_ADD_COMMAND);
-            button.setCallbackData(new CallbackQuery().toString());
+            button.setCallbackData("add_to_vocabulary");
             row.add(button);
             rows.add(row);
             inlineKeyboardMarkup.setKeyboard(rows);
