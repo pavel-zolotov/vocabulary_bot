@@ -11,15 +11,20 @@ import com.google.firebase.database.ValueEventListener;
 
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.TelegramBotsApi;
+import org.telegram.telegrambots.api.methods.AnswerInlineQuery;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.api.objects.Update;
+import org.telegram.telegrambots.api.objects.inlinequery.InlineQuery;
+import org.telegram.telegrambots.api.objects.inlinequery.inputmessagecontent.InputTextMessageContent;
+import org.telegram.telegrambots.api.objects.inlinequery.result.InlineQueryResultArticle;
 import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
 import org.telegram.telegrambots.exceptions.TelegramApiValidationException;
+import org.telegram.telegrambots.logging.BotLogger;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -43,10 +48,36 @@ public class Bot extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
         try {
-            if (update.hasMessage() && update.getMessage().hasText()) {
+            if (update.hasInlineQuery()) {
+                handleIncomingInlineQuery(update.getInlineQuery());
+            } else if (update.hasMessage() && update.getMessage().hasText() && update.getMessage().isUserMessage()) {
                 handleIncomingMessage(update.getMessage());
             }
         } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * For an InlineQuery, adds phrase to user's dictionary
+     * @param inlineQuery InlineQuery received
+     */
+    private void handleIncomingInlineQuery(InlineQuery inlineQuery) {
+        String query = inlineQuery.getQuery();
+        try {
+            if (!query.isEmpty()) {
+                if (query.equals(PHRASE_ADD_COMMAND)) {
+                    AnswerInlineQuery answerInlineQuery = new AnswerInlineQuery();
+                    answerInlineQuery.setInlineQueryId(inlineQuery.getId());
+
+                    InlineQueryResultArticle article = new InlineQueryResultArticle();
+                    article.setInputMessageContent(new InputTextMessageContent().setMessageText("added"));
+                    answerInlineQuery.setResults(article);
+
+                    execute(answerInlineQuery);
+                }
+            }
+        } catch (TelegramApiException e) {
             e.printStackTrace();
         }
     }
@@ -64,32 +95,30 @@ public class Bot extends TelegramLongPollingBot {
     private void handleIncomingMessage(Message msg) {
         SendMessage s = new SendMessage();
         s.setChatId(msg.getChatId());
-        if (msg.getText().equals(PHRASE_ADD_COMMAND)){
-            s.setText("added");
-        }else {
-            //quick action keyboard actions
-            ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
-            replyKeyboardMarkup.setSelective(true);
-            replyKeyboardMarkup.setResizeKeyboard(true);
-            replyKeyboardMarkup.setOneTimeKeyboard(true);
 
-            List<KeyboardRow> keyboard = new ArrayList<>();
-            KeyboardRow row = new KeyboardRow();
-            row.add(PHRASE_ADD_COMMAND); //add to dictionary, notification emoji
-            //row.add("\uD83D\uDCDD"); //edit the translation, edit emoji
-            keyboard.add(row);
-            replyKeyboardMarkup.setKeyboard(keyboard);
-            s.setReplyMarkup(replyKeyboardMarkup);
-        }
+        //quick action keyboard actions
+        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
+        replyKeyboardMarkup.setSelective(true);
+        replyKeyboardMarkup.setResizeKeyboard(true);
+        replyKeyboardMarkup.setOneTimeKeyboard(true);
+
+        List<KeyboardRow> keyboard = new ArrayList<>();
+        KeyboardRow row = new KeyboardRow();
+        row.add(PHRASE_ADD_COMMAND); //add to dictionary
+        //row.add("\uD83D\uDCDD"); //edit the translation, edit emoji
+        keyboard.add(row);
+        replyKeyboardMarkup.setKeyboard(keyboard);
+        s.setReplyMarkup(replyKeyboardMarkup);
 
         try {
             s.setText(Translator.translate("ru", msg.getText()));
-            try {
-                execute(s);
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
-            }
         } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            execute(s);
+        } catch (TelegramApiException e) {
             e.printStackTrace();
         }
     }
