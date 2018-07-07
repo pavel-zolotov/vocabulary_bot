@@ -23,12 +23,14 @@ import org.telegram.telegrambots.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
+import org.telegram.telegrambots.logging.BotLogger;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 public class Bot extends TelegramLongPollingBot {
     final private static String PHRASE_ADD_DATA = "add_to_vocabulary";
@@ -74,7 +76,7 @@ public class Bot extends TelegramLongPollingBot {
                     AnswerCallbackQuery answerCallbackQuery = new AnswerCallbackQuery();
                     answerCallbackQuery.setCallbackQueryId(callbackQuery.getId());
 
-                    System.out.print("clicked");
+                    BotLogger.debug("test", "click");
 
                     execute(answerCallbackQuery);
                 }
