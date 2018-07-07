@@ -18,8 +18,10 @@ import org.telegram.telegrambots.api.objects.Update;
 import org.telegram.telegrambots.api.objects.inlinequery.InlineQuery;
 import org.telegram.telegrambots.api.objects.inlinequery.inputmessagecontent.InputTextMessageContent;
 import org.telegram.telegrambots.api.objects.inlinequery.result.InlineQueryResultArticle;
+import org.telegram.telegrambots.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
@@ -96,19 +98,16 @@ public class Bot extends TelegramLongPollingBot {
         SendMessage s = new SendMessage();
         s.setChatId(msg.getChatId());
 
-        //quick action keyboard actions
-        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
-        replyKeyboardMarkup.setSelective(true);
-        replyKeyboardMarkup.setResizeKeyboard(true);
-        replyKeyboardMarkup.setOneTimeKeyboard(true);
-
-        List<KeyboardRow> keyboard = new ArrayList<>();
-        KeyboardRow row = new KeyboardRow();
-        row.add(PHRASE_ADD_COMMAND); //add to dictionary
-        //row.add("\uD83D\uDCDD"); //edit the translation, edit emoji
-        keyboard.add(row);
-        replyKeyboardMarkup.setKeyboard(keyboard);
-        s.setReplyMarkup(replyKeyboardMarkup);
+        //quick action buttons actions
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+        List<InlineKeyboardButton> row = new ArrayList<>();
+        InlineKeyboardButton button = new InlineKeyboardButton();
+        button.setText(PHRASE_ADD_COMMAND);
+        row.add(button);
+        rows.add(row);
+        inlineKeyboardMarkup.setKeyboard(rows);
+        s.setReplyMarkup(inlineKeyboardMarkup);
 
         try {
             s.setText(Translator.translate("ru", msg.getText()));
