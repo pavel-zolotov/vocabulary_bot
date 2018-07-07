@@ -11,6 +11,7 @@ import com.google.firebase.database.ValueEventListener;
 
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.TelegramBotsApi;
+import org.telegram.telegrambots.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.api.methods.AnswerInlineQuery;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.objects.CallbackQuery;
@@ -56,7 +57,7 @@ public class Bot extends TelegramLongPollingBot {
     public void onUpdateReceived(Update update) {
         try {
             if (update.hasInlineQuery()) {
-                handleIncomingCallbackQuery(update.getCallbackQuery(), update.getInlineQuery().getId());
+                handleIncomingCallbackQuery(update.getCallbackQuery());
             } else if (update.hasMessage() && update.getMessage().hasText() && update.getMessage().isUserMessage()) {
                 handleIncomingMessage(update.getMessage());
             }
@@ -65,19 +66,15 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
-    private void handleIncomingCallbackQuery(CallbackQuery callbackQuery, String inlineQueryId) {
+    private void handleIncomingCallbackQuery(CallbackQuery callbackQuery) {
         String data = callbackQuery.getData();
         try {
             if (!data.isEmpty()) {
                 if (data.equals(PHRASE_ADD_DATA)) {
-                    AnswerInlineQuery answerInlineQuery = new AnswerInlineQuery();
-                    answerInlineQuery.setInlineQueryId(inlineQueryId);
+                    AnswerCallbackQuery answerCallbackQuery = new AnswerCallbackQuery();
+                    answerCallbackQuery.setCallbackQueryId(callbackQuery.getId());
 
-                    InlineQueryResultArticle article = new InlineQueryResultArticle();
-                    article.setInputMessageContent(new InputTextMessageContent().setMessageText("added"));
-                    answerInlineQuery.setResults(article);
-
-                    execute(answerInlineQuery);
+                    execute(answerCallbackQuery);
                 }
             }
         } catch (TelegramApiException e) {
