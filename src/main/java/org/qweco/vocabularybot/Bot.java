@@ -13,6 +13,7 @@ import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.TelegramBotsApi;
 import org.telegram.telegrambots.api.methods.AnswerInlineQuery;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
+import org.telegram.telegrambots.api.objects.CallbackQuery;
 import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.api.objects.Update;
 import org.telegram.telegrambots.api.objects.inlinequery.InlineQuery;
@@ -68,7 +69,7 @@ public class Bot extends TelegramLongPollingBot {
         String query = inlineQuery.getQuery();
         try {
             if (!query.isEmpty()) {
-                if (query.equals(PHRASE_ADD_COMMAND)) {
+                if (query.contains(PHRASE_ADD_COMMAND)) {
                     AnswerInlineQuery answerInlineQuery = new AnswerInlineQuery();
                     answerInlineQuery.setInlineQueryId(inlineQuery.getId());
 
@@ -98,26 +99,29 @@ public class Bot extends TelegramLongPollingBot {
         SendMessage s = new SendMessage();
         s.setChatId(msg.getChatId());
 
-        //quick action buttons actions
-        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
-        List<InlineKeyboardButton> row = new ArrayList<>();
-        InlineKeyboardButton button = new InlineKeyboardButton();
-        button.setText(PHRASE_ADD_COMMAND);
-        row.add(button);
-        rows.add(row);
-        inlineKeyboardMarkup.setKeyboard(rows);
-        s.setReplyMarkup(inlineKeyboardMarkup);
-
         try {
-            s.setText(Translator.translate("ru", msg.getText()));
+            String translation = Translator.translate("ru", msg.getText());
+
+            //quick action buttons actions
+            InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+            List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+            List<InlineKeyboardButton> row = new ArrayList<>();
+            InlineKeyboardButton button = new InlineKeyboardButton();
+            button.setText(PHRASE_ADD_COMMAND);
+            button.setCallbackData(new CallbackQuery().toString());
+            row.add(button);
+            rows.add(row);
+            inlineKeyboardMarkup.setKeyboard(rows);
+            s.setReplyMarkup(inlineKeyboardMarkup);
+
+            s.setText(translation);
+
+            try {
+                execute(s);
+            } catch (TelegramApiException e) {
+                e.printStackTrace();
+            }
         } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        try {
-            execute(s);
-        } catch (TelegramApiException e) {
             e.printStackTrace();
         }
     }
