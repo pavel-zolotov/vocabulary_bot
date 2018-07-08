@@ -94,6 +94,7 @@ public class Bot extends TelegramLongPollingBot {
             if (msg.getText().equals(PHRASE_ADD_COMMAND)){
                 savePhrase(msg.getFrom().getId());
                 s.setText("✔ Done");
+                s.setReplyMarkup(null);
             }else {
                 String translation = Translator.translate("ru", msg.getText());
                 lastPhrase = new Phrase(msg.getText(), translation);
