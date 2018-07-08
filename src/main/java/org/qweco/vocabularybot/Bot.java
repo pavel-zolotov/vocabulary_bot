@@ -124,7 +124,7 @@ public class Bot extends TelegramLongPollingBot {
     private void savePhrase (Phrase phrase, int userId){
         try {
             // Fetch the service account key JSON file contents
-            FileInputStream serviceAccount = new FileInputStream("/vocabulary-bot-firebase-adminsdk-nopvk-fa58da275b.json.json");
+            FileInputStream serviceAccount = new FileInputStream("/vocabulary-bot-firebase-adminsdk-nopvk-fa58da275b.json");
 
             // Initialize the app with a custom auth variable, limiting the server's access
             Map<String, Object> auth = new HashMap<>();
@@ -156,7 +156,7 @@ public class Bot extends TelegramLongPollingBot {
             ArrayList<String> results = new ArrayList<>();
 
             // Fetch the service account key JSON file contents
-            FileInputStream serviceAccount = new FileInputStream("/vocabulary-bot-firebase-adminsdk-nopvk-fa58da275b.json.json");
+            FileInputStream serviceAccount = new FileInputStream("/vocabulary-bot-firebase-adminsdk-nopvk-fa58da275b.json");
 
             // Initialize the app with a custom auth variable, limiting the server's access
             Map<String, Object> auth = new HashMap<>();
