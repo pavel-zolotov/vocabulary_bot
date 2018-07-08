@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 public class Bot extends TelegramLongPollingBot {
     final private static String PHRASE_ADD_DATA = "add_to_vocabulary";
@@ -146,17 +147,22 @@ public class Bot extends TelegramLongPollingBot {
             // Generate a reference to a new location and add some data using push()
             System.err.println("1");
             DatabaseReference pushedRef = ref.push();
+            CountDownLatch done = new CountDownLatch(1);
             pushedRef.setValue(phrase, (DatabaseError error, DatabaseReference reference) -> {
                 if (error != null){
                     error.toException().printStackTrace();
                 }else {
                     System.err.println("saved");
                 }
+                done.countDown();
             });
+            done.await();
             System.err.println("2");
 
 //            FirebaseApp.getInstance().delete();
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
