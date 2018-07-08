@@ -1,6 +1,5 @@
 package org.qweco.vocabularybot;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
@@ -9,9 +8,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.google.gson.Gson;
 
-import org.json.JSONObject;
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.TelegramBotsApi;
 import org.telegram.telegrambots.api.methods.AnswerCallbackQuery;
@@ -30,10 +27,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
 
 public class Bot extends TelegramLongPollingBot {
     final private static String PHRASE_ADD_DATA = "add_to_vocabulary";
+    private Phrase lastPhrase;
 
     public static void main (String[] args){
         ApiContextInitializer.init();
@@ -69,17 +66,14 @@ public class Bot extends TelegramLongPollingBot {
     }
 
     private void handleIncomingCallbackQuery(CallbackQuery callbackQuery) {
-        String[] data = callbackQuery.getData().split(":");
         try {
-            if (data[0].equals(PHRASE_ADD_DATA)) {
+            if (callbackQuery.getData().equals(PHRASE_ADD_DATA)) {
                 AnswerCallbackQuery answerCallbackQuery = new AnswerCallbackQuery();
                 answerCallbackQuery.setCallbackQueryId(callbackQuery.getId());
 
                 execute(answerCallbackQuery);
 
-                System.err.println(data[1]);
-                System.err.println(new Gson().fromJson(data[1], Phrase.class).translation);
-                savePhrase(new Gson().fromJson(data[1], Phrase.class), callbackQuery.getFrom().getId());
+                savePhrase(callbackQuery.getFrom().getId());
             }
         } catch (TelegramApiException e) {
             e.printStackTrace();
@@ -92,8 +86,7 @@ public class Bot extends TelegramLongPollingBot {
 
         try {
             String translation = Translator.translate("ru", msg.getText());
-            Phrase phrase = new Phrase("0", msg.getText(), translation, "test");
-            System.err.print(new Gson().toJson(phrase));
+            lastPhrase = new Phrase(msg.getText(), translation);
 
             //quick action buttons actions
             InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
@@ -101,7 +94,7 @@ public class Bot extends TelegramLongPollingBot {
             List<InlineKeyboardButton> row = new ArrayList<>();
             InlineKeyboardButton button = new InlineKeyboardButton();
             button.setText("➕");
-            button.setCallbackData(PHRASE_ADD_DATA + ":" + new Gson().toJson(phrase));
+            button.setCallbackData(PHRASE_ADD_DATA);
             row.add(button);
             rows.add(row);
             inlineKeyboardMarkup.setKeyboard(rows);
@@ -120,7 +113,7 @@ public class Bot extends TelegramLongPollingBot {
     }
 
 
-    private void savePhrase (Phrase phrase, int userId){
+    private void savePhrase (int userId){
         try {
             // Fetch the service account key JSON file contents
             FileInputStream serviceAccount = new FileInputStream("vocabulary-bot-firebase-adminsdk-nopvk-fa58da275b.json");
@@ -143,7 +136,7 @@ public class Bot extends TelegramLongPollingBot {
 
             // Generate a reference to a new location and add some data using push()
             DatabaseReference pushedRef = ref.push();
-            pushedRef.setValueAsync(phrase);
+            pushedRef.setValueAsync(lastPhrase);
 
             FirebaseApp.getInstance().delete();
         } catch (IOException e) {

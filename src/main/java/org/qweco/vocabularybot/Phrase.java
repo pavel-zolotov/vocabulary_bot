@@ -1,14 +1,10 @@
 package org.qweco.vocabularybot;
 
 public class Phrase {
-    public String id;
-    public String source;
-    public String translation;
-    public String definition;
-
-    public Phrase(){
-        super();
-    }
+    private String id;
+    private String source;
+    private String translation;
+    private String definition;
 
     public Phrase(String source, String translation) {
         this.source = source;
@@ -19,7 +15,6 @@ public class Phrase {
         this.id = id;
         this.source = source;
         this.translation = translation;
-
         this.definition = definition;
     }
 
