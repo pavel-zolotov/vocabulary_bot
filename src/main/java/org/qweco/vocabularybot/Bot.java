@@ -120,7 +120,7 @@ public class Bot extends TelegramLongPollingBot {
 
             // Initialize the app with a custom auth variable, limiting the server's access
             Map<String, Object> auth = new HashMap<>();
-            auth.put("uid", userId);
+            auth.put("uid", String.valueOf(userId));
 
             FirebaseOptions options = new FirebaseOptions.Builder()
                     .setCredentials(GoogleCredentials.fromStream(serviceAccount))
