@@ -136,9 +136,12 @@ public class Bot extends TelegramLongPollingBot {
 
             // Generate a reference to a new location and add some data using push()
             DatabaseReference pushedRef = ref.push();
-            pushedRef.setValueAsync(lastPhrase);
-
-            //FirebaseApp.getInstance().delete();
+            pushedRef.setValue(lastPhrase, (DatabaseError error, DatabaseReference reference) -> {
+                if (error != null){
+                    error.toException().printStackTrace();
+                }
+                FirebaseApp.getInstance().delete();
+            });
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -173,16 +176,17 @@ public class Bot extends TelegramLongPollingBot {
                         String source = phrase.child("source").getValue().toString();
                         String translation = phrase.child("translation").getValue().toString();
                         results.add("*"+source+"*\n_"+translation+"_"); //telegram markdown
+                        FirebaseApp.getInstance().delete();
                     }
                 }
 
                 @Override
                 public void onCancelled(DatabaseError error) {
                     error.toException().printStackTrace();
+                    FirebaseApp.getInstance().delete();
                 }
             });
 
-            FirebaseApp.getInstance().delete();
             return results;
         } catch (IOException e) {
             e.printStackTrace();
