@@ -77,6 +77,8 @@ public class Bot extends TelegramLongPollingBot {
 
                 execute(answerCallbackQuery);
 
+                System.err.println(data[1]);
+                System.err.println(new Gson().fromJson(data[1], Phrase.class).translation);
                 savePhrase(new Gson().fromJson(data[1], Phrase.class), callbackQuery.getFrom().getId());
             }
         } catch (TelegramApiException e) {
