@@ -138,7 +138,7 @@ public class Bot extends TelegramLongPollingBot {
             DatabaseReference pushedRef = ref.push();
             pushedRef.setValueAsync(lastPhrase);
 
-            FirebaseApp.getInstance().delete();
+            //FirebaseApp.getInstance().delete();
         } catch (IOException e) {
             e.printStackTrace();
         }
