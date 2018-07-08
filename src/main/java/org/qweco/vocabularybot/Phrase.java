@@ -6,6 +6,10 @@ public class Phrase {
     private String translation;
     private String definition;
 
+    public Phrase(){
+        super();
+    }
+
     public Phrase(String id, String source, String translation, String definition) {
         this.id = id;
         this.source = source;
