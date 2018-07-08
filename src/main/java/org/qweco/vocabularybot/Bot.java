@@ -137,11 +137,14 @@ public class Bot extends TelegramLongPollingBot {
                     .build();
             FirebaseApp.initializeApp(options);
 
+            System.err.println("0");
             // The app only has access as defined in the Security Rules
             DatabaseReference ref = FirebaseDatabase
                     .getInstance()
                     .getReference("users").child(String.valueOf(userId)).child("en-ru");
             // Generate a reference to a new location and add some data using push()
+
+            System.err.println("1");
             DatabaseReference pushedRef = ref.push();
             pushedRef.setValue(phrase, (DatabaseError error, DatabaseReference reference) -> {
                 if (error != null){
@@ -150,8 +153,9 @@ public class Bot extends TelegramLongPollingBot {
                     System.err.println("saved");
                 }
             });
+            System.err.println("2");
 
-            FirebaseApp.getInstance().delete();
+//            FirebaseApp.getInstance().delete();
         } catch (IOException e) {
             e.printStackTrace();
         }
