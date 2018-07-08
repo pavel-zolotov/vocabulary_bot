@@ -9,6 +9,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.gson.Gson;
 
 import org.json.JSONObject;
 import org.telegram.telegrambots.ApiContextInitializer;
@@ -69,22 +70,16 @@ public class Bot extends TelegramLongPollingBot {
 
     private void handleIncomingCallbackQuery(CallbackQuery callbackQuery) {
         String[] data = callbackQuery.getData().split(":");
-        ObjectMapper mapper = new ObjectMapper();
         try {
-            Phrase phrase = mapper.readValue(data[1], Phrase.class);
-            try {
-                if (data[0].equals(PHRASE_ADD_DATA)) {
-                    AnswerCallbackQuery answerCallbackQuery = new AnswerCallbackQuery();
-                    answerCallbackQuery.setCallbackQueryId(callbackQuery.getId());
+            if (data[0].equals(PHRASE_ADD_DATA)) {
+                AnswerCallbackQuery answerCallbackQuery = new AnswerCallbackQuery();
+                answerCallbackQuery.setCallbackQueryId(callbackQuery.getId());
 
-                    execute(answerCallbackQuery);
+                execute(answerCallbackQuery);
 
-                    savePhrase(phrase, callbackQuery.getFrom().getId());
-                }
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
+                savePhrase(new Gson().fromJson(data[1], Phrase.class), callbackQuery.getFrom().getId());
             }
-        } catch (IOException e) {
+        } catch (TelegramApiException e) {
             e.printStackTrace();
         }
     }
@@ -103,7 +98,7 @@ public class Bot extends TelegramLongPollingBot {
             List<InlineKeyboardButton> row = new ArrayList<>();
             InlineKeyboardButton button = new InlineKeyboardButton();
             button.setText("➕");
-            button.setCallbackData(PHRASE_ADD_DATA+":"+new JSONObject(phrase).toString());
+            button.setCallbackData(PHRASE_ADD_DATA + ":" + new Gson().toJson(phrase));
             row.add(button);
             rows.add(row);
             inlineKeyboardMarkup.setKeyboard(rows);
@@ -134,39 +129,21 @@ public class Bot extends TelegramLongPollingBot {
             FirebaseOptions options = new FirebaseOptions.Builder()
                     .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                     .setDatabaseUrl("https://vocabulary-bot.firebaseio.com/")
-                    //.setDatabaseAuthVariableOverride(auth)
+                    .setDatabaseAuthVariableOverride(auth)
                     .build();
             FirebaseApp.initializeApp(options);
 
-            System.err.println("0");
             // The app only has access as defined in the Security Rules
             DatabaseReference ref = FirebaseDatabase
                     .getInstance()
-                    .getReference("users").child(String.valueOf(userId)).child("en-ru");
+                    .getReference("users").child(String.valueOf(userId)).child("en-ru"); //TODO change lang path
 
             // Generate a reference to a new location and add some data using push()
-            System.err.println("1");
             DatabaseReference pushedRef = ref.push();
-            CountDownLatch done = new CountDownLatch(1);
-            HashMap<String, String> map = new HashMap<>();
-            map.put("test", "test");
-            map.put("test1", "test1");
-            System.err.println(phrase.translation);
-            pushedRef.setValue(map, (DatabaseError error, DatabaseReference reference) -> {
-                if (error != null){
-                    error.toException().printStackTrace();
-                }else {
-                    System.err.println("saved");
-                }
-                done.countDown();
-            });
-            done.await();
-            System.err.println("2");
+            pushedRef.setValueAsync(phrase);
 
-//            FirebaseApp.getInstance().delete();
+            FirebaseApp.getInstance().delete();
         } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -192,7 +169,7 @@ public class Bot extends TelegramLongPollingBot {
             // The app only has access as defined in the Security Rules
             DatabaseReference ref = FirebaseDatabase
                     .getInstance()
-                    .getReference("users").child(String.valueOf(userId)).child("en-ru");
+                    .getReference("users").child(String.valueOf(userId)).child("en-ru"); //TODO change lang path
             ref.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
