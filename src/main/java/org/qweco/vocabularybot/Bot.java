@@ -140,7 +140,7 @@ public class Bot extends TelegramLongPollingBot {
             // The app only has access as defined in the Security Rules
             DatabaseReference ref = FirebaseDatabase
                     .getInstance()
-                    .getReference("/users/"+userId+"/en-ru/");
+                    .getReference("users").child(String.valueOf(userId)).child("en-ru");
             // Generate a reference to a new location and add some data using push()
             DatabaseReference pushedRef = ref.push();
             pushedRef.setValueAsync(phrase);
@@ -172,7 +172,7 @@ public class Bot extends TelegramLongPollingBot {
             // The app only has access as defined in the Security Rules
             DatabaseReference ref = FirebaseDatabase
                     .getInstance()
-                    .getReference("/users/"+userId+"/en-ru/");
+                    .getReference("users").child(String.valueOf(userId)).child("en-ru");
             ref.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
