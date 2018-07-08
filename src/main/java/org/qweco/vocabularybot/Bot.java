@@ -133,7 +133,7 @@ public class Bot extends TelegramLongPollingBot {
             FirebaseOptions options = new FirebaseOptions.Builder()
                     .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                     .setDatabaseUrl("https://vocabulary-bot.firebaseio.com/")
-                    .setDatabaseAuthVariableOverride(auth)
+                    //.setDatabaseAuthVariableOverride(auth)
                     .build();
             FirebaseApp.initializeApp(options);
 
@@ -142,8 +142,8 @@ public class Bot extends TelegramLongPollingBot {
             DatabaseReference ref = FirebaseDatabase
                     .getInstance()
                     .getReference("users").child(String.valueOf(userId)).child("en-ru");
-            // Generate a reference to a new location and add some data using push()
 
+            // Generate a reference to a new location and add some data using push()
             System.err.println("1");
             DatabaseReference pushedRef = ref.push();
             pushedRef.setValue(phrase, (DatabaseError error, DatabaseReference reference) -> {
