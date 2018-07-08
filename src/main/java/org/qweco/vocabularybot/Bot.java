@@ -143,7 +143,13 @@ public class Bot extends TelegramLongPollingBot {
                     .getReference("users").child(String.valueOf(userId)).child("en-ru");
             // Generate a reference to a new location and add some data using push()
             DatabaseReference pushedRef = ref.push();
-            pushedRef.setValueAsync(phrase);
+            pushedRef.setValue(phrase, (DatabaseError error, DatabaseReference reference) -> {
+                if (error != null){
+                    error.toException().printStackTrace();
+                }else {
+                    System.err.println("saved");
+                }
+            });
 
             FirebaseApp.getInstance().delete();
         } catch (IOException e) {
