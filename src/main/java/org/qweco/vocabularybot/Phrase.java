@@ -1,10 +1,10 @@
 package org.qweco.vocabularybot;
 
 public class Phrase {
-    private String id;
-    private String source;
-    private String translation;
-    private String definition;
+    public String id;
+    public String source;
+    public String translation;
+    public String definition;
 
     public Phrase(String source, String translation) {
         this.source = source;
