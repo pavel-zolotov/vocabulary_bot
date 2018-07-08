@@ -151,6 +151,7 @@ public class Bot extends TelegramLongPollingBot {
             HashMap<String, String> map = new HashMap<>();
             map.put("test", "test");
             map.put("test1", "test1");
+            System.err.println(phrase.translation);
             pushedRef.setValue(map, (DatabaseError error, DatabaseReference reference) -> {
                 if (error != null){
                     error.toException().printStackTrace();
