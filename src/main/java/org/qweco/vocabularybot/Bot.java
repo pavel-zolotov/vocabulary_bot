@@ -92,7 +92,7 @@ public class Bot extends TelegramLongPollingBot {
 
         try {
             String translation = Translator.translate("ru", msg.getText());
-            Phrase phrase = new Phrase(msg.getText(), translation);
+            Phrase phrase = new Phrase("0", msg.getText(), translation, "test");
             System.err.print(new Gson().toJson(phrase));
 
             //quick action buttons actions
