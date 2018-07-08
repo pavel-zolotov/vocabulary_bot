@@ -148,7 +148,10 @@ public class Bot extends TelegramLongPollingBot {
             System.err.println("1");
             DatabaseReference pushedRef = ref.push();
             CountDownLatch done = new CountDownLatch(1);
-            pushedRef.setValue(phrase, (DatabaseError error, DatabaseReference reference) -> {
+            HashMap<String, String> map = new HashMap<>();
+            map.put("test", "test");
+            map.put("test1", "test1");
+            pushedRef.setValue(map, (DatabaseError error, DatabaseReference reference) -> {
                 if (error != null){
                     error.toException().printStackTrace();
                 }else {
