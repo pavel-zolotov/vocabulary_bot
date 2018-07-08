@@ -14,28 +14,21 @@ import org.json.JSONObject;
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.TelegramBotsApi;
 import org.telegram.telegrambots.api.methods.AnswerCallbackQuery;
-import org.telegram.telegrambots.api.methods.AnswerInlineQuery;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.objects.CallbackQuery;
 import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.api.objects.Update;
-import org.telegram.telegrambots.api.objects.inlinequery.inputmessagecontent.InputTextMessageContent;
-import org.telegram.telegrambots.api.objects.inlinequery.result.InlineQueryResultArticle;
 import org.telegram.telegrambots.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
-import org.telegram.telegrambots.logging.BotLogger;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
-
-import io.grpc.netty.shaded.io.netty.internal.tcnative.Library;
-import jdk.nashorn.internal.parser.JSONParser;
 
 public class Bot extends TelegramLongPollingBot {
     final private static String PHRASE_ADD_DATA = "add_to_vocabulary";
@@ -130,12 +123,15 @@ public class Bot extends TelegramLongPollingBot {
 
     private void savePhrase (Phrase phrase, int userId){
         try {
+            // Fetch the service account key JSON file contents
+            FileInputStream serviceAccount = new FileInputStream("/vocabulary-bot-firebase-adminsdk-nopvk-fa58da275b.json.json");
+
             // Initialize the app with a custom auth variable, limiting the server's access
             Map<String, Object> auth = new HashMap<>();
             auth.put("uid", userId);
 
             FirebaseOptions options = new FirebaseOptions.Builder()
-                    .setCredentials(GoogleCredentials.getApplicationDefault())
+                    .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                     .setDatabaseUrl("https://vocabulary-bot.firebaseio.com/")
                     .setDatabaseAuthVariableOverride(auth)
                     .build();
@@ -159,12 +155,15 @@ public class Bot extends TelegramLongPollingBot {
         try {
             ArrayList<String> results = new ArrayList<>();
 
+            // Fetch the service account key JSON file contents
+            FileInputStream serviceAccount = new FileInputStream("/vocabulary-bot-firebase-adminsdk-nopvk-fa58da275b.json.json");
+
             // Initialize the app with a custom auth variable, limiting the server's access
             Map<String, Object> auth = new HashMap<>();
             auth.put("uid", userId);
 
             FirebaseOptions options = new FirebaseOptions.Builder()
-                    .setCredentials(GoogleCredentials.getApplicationDefault())
+                    .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                     .setDatabaseUrl("https://vocabulary-bot.firebaseio.com/")
                     .setDatabaseAuthVariableOverride(auth)
                     .build();
