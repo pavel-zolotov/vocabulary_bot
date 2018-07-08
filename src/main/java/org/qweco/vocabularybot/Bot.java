@@ -145,7 +145,7 @@ public class Bot extends TelegramLongPollingBot {
             DatabaseReference pushedRef = ref.push();
             pushedRef.setValueAsync(phrase);
 
-            FirebaseApp.getInstance().delete();
+//            FirebaseApp.getInstance().delete();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -189,7 +189,7 @@ public class Bot extends TelegramLongPollingBot {
                 }
             });
 
-            FirebaseApp.getInstance().delete();
+//            FirebaseApp.getInstance().delete();
             return results;
         } catch (IOException e) {
             e.printStackTrace();
