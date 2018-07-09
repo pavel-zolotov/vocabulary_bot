@@ -212,11 +212,12 @@ public class Bot extends TelegramLongPollingBot {
                         InlineKeyboardButton button = new InlineKeyboardButton();
                         button.setText("*"+phrase.source+"*\n_"+phrase.translation+"_"); //telegram markdown
                         button.setCallbackData("show_phrase");
+                        row.add(button);
 
                         InlineKeyboardButton buttonRemove = new InlineKeyboardButton();
                         buttonRemove.setText("❎");
                         buttonRemove.setCallbackData(PHRASE_REMOVE_DATA+":"+phrase.id);
-                        row.add(button);
+                        row.add(buttonRemove);
                         rows.add(row);
                     }
                     inlineKeyboardMarkup.setKeyboard(rows);
@@ -332,7 +333,7 @@ public class Bot extends TelegramLongPollingBot {
                             System.err.print(definition);
                             results.add(new Phrase(id, source, translation, definition));
                         }else {
-                            results.add(new Phrase(id, source, translation));
+                            results.add(new Phrase(id, source, translation, null));
                         }
                         System.err.print("added");
                     }
