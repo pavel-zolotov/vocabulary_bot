@@ -32,10 +32,12 @@ import org.telegram.telegrambots.logging.BotLogger;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.FileSystemException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 public class Bot extends TelegramLongPollingBot {
     final private static String PHRASE_ADD_DATA = "add_to_vocabulary";
@@ -287,7 +289,7 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
-    private ArrayList<Phrase> loadPhrases (int userId){
+    private ArrayList<Phrase> loadPhrases (int userId) {
         try {
             ArrayList<Phrase> results = new ArrayList<>();
 
@@ -309,28 +311,32 @@ public class Bot extends TelegramLongPollingBot {
             DatabaseReference ref = FirebaseDatabase
                     .getInstance()
                     .getReference("users").child(String.valueOf(userId)).child("en-ru"); //TODO change lang path
+
+            CountDownLatch done = new CountDownLatch(1);
             ref.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
-                    for (DataSnapshot phrase: dataSnapshot.getChildren()){
+                    for (DataSnapshot phrase : dataSnapshot.getChildren()) {
                         String id = phrase.getKey();
                         String source = phrase.child("source").getValue().toString();
                         String translation = phrase.child("translation").getValue().toString();
                         String definition = phrase.child("definition").getValue().toString();
                         results.add(new Phrase(id, source, translation, definition));
-                        FirebaseApp.getInstance().delete();
+                        done.countDown();
                     }
                 }
 
                 @Override
                 public void onCancelled(DatabaseError error) {
                     error.toException().printStackTrace();
-                    FirebaseApp.getInstance().delete();
+                    done.countDown();
                 }
             });
 
+            done.await();
+            FirebaseApp.getInstance().delete();
             return results;
-        } catch (IOException e) {
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
             return null;
         }
