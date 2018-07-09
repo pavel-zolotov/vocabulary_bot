@@ -77,6 +77,7 @@ public class Bot extends TelegramLongPollingBot {
                 //edit message's buttons
                 EditMessageReplyMarkup replyMarkup = new EditMessageReplyMarkup();
                 replyMarkup.setMessageId(callbackQuery.getMessage().getMessageId());
+                replyMarkup.setChatId(callbackQuery.getMessage().getChatId());
                 execute(replyMarkup);
 
                 //save phrase to DB
