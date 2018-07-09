@@ -146,6 +146,8 @@ public class Bot extends TelegramLongPollingBot {
             case "/start": {
                 //quick action buttons
                 ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
+                replyKeyboardMarkup.setResizeKeyboard(true);
+                replyKeyboardMarkup.setOneTimeKeyboard(true);
                 List<KeyboardRow> keyboard = new ArrayList<>();
                 KeyboardRow row = new KeyboardRow();
                 row.add(PHRASE_SHOW_COMMAND);
@@ -156,12 +158,14 @@ public class Bot extends TelegramLongPollingBot {
 
                 s.setText("Hi there! Send me a foreign words and I will answer with the translation and definition, when it's appropriate.\n" +
                         "Also you can add words to your personal vocabulary. In this case, I'll remind you about them 3 times a day until you learn." +
-                        "It's the default interval value, so you can change it in " + SETTINGS_COMMAND + ". I'm ready to start!");
+                        "It's the default interval value, so you can change it in " + SETTINGS_COMMAND + ". \nI'm ready to start!");
                 break;
             }
             case SETTINGS_COMMAND: {
                 //quick action buttons
                 ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
+                replyKeyboardMarkup.setResizeKeyboard(true);
+                replyKeyboardMarkup.setOneTimeKeyboard(true);
                 List<KeyboardRow> keyboard = new ArrayList<>();
                 KeyboardRow row = new KeyboardRow();
                 row.add(SETTINGS_LANG_COMMAND);
@@ -171,11 +175,14 @@ public class Bot extends TelegramLongPollingBot {
                 keyboard.add(row);
                 replyKeyboardMarkup.setKeyboard(keyboard);
                 s.setReplyMarkup(replyKeyboardMarkup);
+                s.setText("Change some settings here");
                 break;
             }
             case SETTINGS_BACK: {
                 //quick action buttons
                 ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
+                replyKeyboardMarkup.setResizeKeyboard(true);
+                replyKeyboardMarkup.setOneTimeKeyboard(true);
                 List<KeyboardRow> keyboard = new ArrayList<>();
                 KeyboardRow row = new KeyboardRow();
                 row.add(PHRASE_SHOW_COMMAND);
@@ -183,6 +190,7 @@ public class Bot extends TelegramLongPollingBot {
                 keyboard.add(row);
                 replyKeyboardMarkup.setKeyboard(keyboard);
                 s.setReplyMarkup(replyKeyboardMarkup);
+                s.setText("I'm ready!");
                 break;
             }
             case PHRASE_SHOW_COMMAND:
