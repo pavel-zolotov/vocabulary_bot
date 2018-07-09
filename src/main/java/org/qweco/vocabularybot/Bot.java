@@ -211,7 +211,7 @@ public class Bot extends TelegramLongPollingBot {
                         List<InlineKeyboardButton> row = new ArrayList<>();
                         InlineKeyboardButton button = new InlineKeyboardButton();
                         button.setText("*"+phrase.source+"*\n_"+phrase.translation+"_"); //telegram markdown
-                        button.setCallbackData("");
+                        button.setCallbackData("show_phrase");
 
                         InlineKeyboardButton buttonRemove = new InlineKeyboardButton();
                         buttonRemove.setText("❎");
