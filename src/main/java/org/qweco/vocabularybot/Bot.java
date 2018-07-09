@@ -13,14 +13,12 @@ import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.TelegramBotsApi;
 import org.telegram.telegrambots.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
+import org.telegram.telegrambots.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.api.objects.CallbackQuery;
 import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.api.objects.Update;
 import org.telegram.telegrambots.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.InlineKeyboardButton;
-import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardButton;
-import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
 
@@ -32,8 +30,7 @@ import java.util.List;
 import java.util.Map;
 
 public class Bot extends TelegramLongPollingBot {
-    final private static String PHRASE_ADD_COMMAND = "➕ Add to vocabulary";
-    private Phrase lastPhrase;
+    final private static String PHRASE_ADD_DATA = "add_to_vocabulary";
 
     public static void main (String[] args){
         ApiContextInitializer.init();
@@ -58,12 +55,9 @@ public class Bot extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
         try {
-            /*if (update.hasCallbackQuery()) {
+            if (update.hasCallbackQuery()) {
                 handleIncomingCallbackQuery(update.getCallbackQuery());
             } else if (update.hasMessage() && update.getMessage().hasText() && update.getMessage().isUserMessage()) {
-                handleIncomingMessage(update.getMessage());
-            }*/
-            if (update.hasMessage() && update.getMessage().hasText()){
                 handleIncomingMessage(update.getMessage());
             }
         } catch (Exception e) {
@@ -71,49 +65,54 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
-    /*private void handleIncomingCallbackQuery(CallbackQuery callbackQuery) {
+    private void handleIncomingCallbackQuery(CallbackQuery callbackQuery) {
         try {
             if (callbackQuery.getData().equals(PHRASE_ADD_DATA)) {
+                //send an answer
                 AnswerCallbackQuery answerCallbackQuery = new AnswerCallbackQuery();
+                answerCallbackQuery.setText("✔ Done");
                 answerCallbackQuery.setCallbackQueryId(callbackQuery.getId());
-
                 execute(answerCallbackQuery);
 
-                savePhrase(callbackQuery.getFrom().getId());
+                //edit message's buttons
+                EditMessageReplyMarkup replyMarkup = new EditMessageReplyMarkup();
+                replyMarkup.setMessageId(callbackQuery.getMessage().getMessageId());
+                execute(replyMarkup);
+
+                //save phrase to DB
+                Phrase phrase = new Phrase(callbackQuery.getMessage().getReplyToMessage().getText(),
+                        callbackQuery.getMessage().getText());
+                savePhrase(phrase, callbackQuery.getFrom().getId());
+
+                //set a timer
+                //TODO
             }
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
-    }*/
+    }
 
     private void handleIncomingMessage(Message msg) {
         SendMessage s = new SendMessage();
         s.setChatId(msg.getChatId());
 
         try {
-            if (msg.getText().equals(PHRASE_ADD_COMMAND)){
-                savePhrase(msg.getFrom().getId());
-                s.setText("✔ Done");
-                s.setReplyMarkup(new ReplyKeyboardMarkup().setSelective(false).setKeyboard(new ArrayList<>()));
-            }else {
-                String translation = Translator.translate("ru", msg.getText());
-                lastPhrase = new Phrase(msg.getText(), translation);
-                s.setText(translation);
+            String translation = Translator.translate("ru", msg.getText());
 
-                //quick action keyboard actions
-                ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
-                replyKeyboardMarkup.setSelective(true);
-                replyKeyboardMarkup.setResizeKeyboard(true);
-                replyKeyboardMarkup.setOneTimeKeyboard(true);
+            //quick action buttons actions
+            InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+            List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+            List<InlineKeyboardButton> row = new ArrayList<>();
+            InlineKeyboardButton button = new InlineKeyboardButton();
+            button.setText("➕ Add to vocabulary");
+            button.setCallbackData(PHRASE_ADD_DATA);
+            row.add(button);
+            rows.add(row);
+            inlineKeyboardMarkup.setKeyboard(rows);
+            s.setReplyMarkup(inlineKeyboardMarkup);
 
-                List<KeyboardRow> keyboard = new ArrayList<>();
-                KeyboardRow row = new KeyboardRow();
-                row.add(PHRASE_ADD_COMMAND); //add to dictionary
-                //row.add(""); //edit translation
-                keyboard.add(row);
-                replyKeyboardMarkup.setKeyboard(keyboard);
-                s.setReplyMarkup(replyKeyboardMarkup);
-            }
+            s.setText(translation);
+            s.setReplyToMessageId(msg.getMessageId());
 
             try {
                 execute(s);
@@ -126,7 +125,7 @@ public class Bot extends TelegramLongPollingBot {
     }
 
 
-    private void savePhrase (int userId){
+    private void savePhrase (Phrase phrase, int userId){
         try {
             // Fetch the service account key JSON file contents
             FileInputStream serviceAccount = new FileInputStream("vocabulary-bot-firebase-adminsdk-nopvk-fa58da275b.json");
@@ -149,7 +148,7 @@ public class Bot extends TelegramLongPollingBot {
 
             // Generate a reference to a new location and add some data using push()
             DatabaseReference pushedRef = ref.push();
-            pushedRef.setValue(lastPhrase, (DatabaseError error, DatabaseReference reference) -> {
+            pushedRef.setValue(phrase, (DatabaseError error, DatabaseReference reference) -> {
                 if (error != null){
                     error.toException().printStackTrace();
                 }
