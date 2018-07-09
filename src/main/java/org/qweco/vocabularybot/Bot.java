@@ -380,6 +380,8 @@ public class Bot extends TelegramLongPollingBot {
                     .getInstance()
                     .getReference("users").child(String.valueOf(userId)).child("en-ru").child(phraseId); //TODO change lang path
             ref.removeValueAsync();
+
+            FirebaseApp.getInstance().delete();
         } catch (IOException e) {
             e.printStackTrace();
         }
