@@ -313,10 +313,12 @@ public class Bot extends TelegramLongPollingBot {
                     .getInstance()
                     .getReference("users").child(String.valueOf(userId)).child("en-ru"); //TODO change lang path
 
+            System.err.print("1");
             final AtomicBoolean done = new AtomicBoolean(false);
             ref.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
+                    System.err.print("-1");
                     for (DataSnapshot phrase : dataSnapshot.getChildren()) {
                         String id = phrase.getKey();
                         String source = phrase.child("source").getValue().toString();
@@ -325,6 +327,7 @@ public class Bot extends TelegramLongPollingBot {
                         results.add(new Phrase(id, source, translation, definition));
                     }
                     done.set(true);
+                    System.err.print("-2");
                 }
 
                 @Override
@@ -333,9 +336,11 @@ public class Bot extends TelegramLongPollingBot {
                     done.set(true);
                 }
             });
-
+            System.err.print("2");
             while (!done.get());
+            System.err.print("3");
             FirebaseApp.getInstance().delete();
+            System.err.print("4");
             return results;
         } catch (IOException e) {
             e.printStackTrace();
