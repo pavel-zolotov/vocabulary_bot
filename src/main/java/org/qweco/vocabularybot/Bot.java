@@ -45,7 +45,7 @@ public class Bot extends TelegramLongPollingBot {
     final private static String SETTINGS_LANG_COMMAND = "🌐 Language";
     final private static String SETTINGS_ALERT_INTERVAL_COMMAND = "🕐 Alert interval";
     final private static String SETTINGS_ALERT_SCOPE_COMMAND = "📋 Scope of words per alert";
-    final private static String SETTINGS_BACK = "📋 Back";
+    final private static String SETTINGS_BACK = "⬅ Back";
 
     public static void main (String[] args){
         ApiContextInitializer.init();
@@ -167,12 +167,14 @@ public class Bot extends TelegramLongPollingBot {
                 replyKeyboardMarkup.setResizeKeyboard(true);
                 replyKeyboardMarkup.setOneTimeKeyboard(true);
                 List<KeyboardRow> keyboard = new ArrayList<>();
-                KeyboardRow row = new KeyboardRow();
-                row.add(SETTINGS_LANG_COMMAND);
-                row.add(SETTINGS_ALERT_INTERVAL_COMMAND);
-                row.add(SETTINGS_ALERT_SCOPE_COMMAND);
-                row.add(SETTINGS_BACK);
-                keyboard.add(row);
+                KeyboardRow row1 = new KeyboardRow();
+                row1.add(SETTINGS_ALERT_INTERVAL_COMMAND);
+                row1.add(SETTINGS_ALERT_SCOPE_COMMAND);
+                keyboard.add(row1);
+                KeyboardRow row2 = new KeyboardRow();
+                row2.add(SETTINGS_LANG_COMMAND);
+                row2.add(SETTINGS_BACK);
+                keyboard.add(row2);
                 replyKeyboardMarkup.setKeyboard(keyboard);
                 s.setReplyMarkup(replyKeyboardMarkup);
                 s.setText("Change some settings here");
