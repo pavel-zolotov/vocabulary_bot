@@ -319,12 +319,18 @@ public class Bot extends TelegramLongPollingBot {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
                     System.err.print("-1");
+                    System.err.print(dataSnapshot.getChildrenCount());
                     for (DataSnapshot phrase : dataSnapshot.getChildren()) {
                         String id = phrase.getKey();
+                        System.err.print(id);
                         String source = phrase.child("source").getValue().toString();
+                        System.err.print(source);
                         String translation = phrase.child("translation").getValue().toString();
+                        System.err.print(translation);
                         String definition = phrase.child("definition").getValue().toString();
+                        System.err.print(definition);
                         results.add(new Phrase(id, source, translation, definition));
+                        System.err.print("added");
                     }
                     done.set(true);
                     System.err.print("-2");
