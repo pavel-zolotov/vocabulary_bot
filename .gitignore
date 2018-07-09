@@ -7,3 +7,5 @@
 /captures
 .externalNativeBuild
 /src/main/java/org/qweco/vocabularybot/BotConfig.java
+/vocabulary-bot-firebase-adminsdk-nopvk-fa58da275b.json
+/HerokuDeploy.bat
