@@ -38,6 +38,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Bot extends TelegramLongPollingBot {
     final private static String PHRASE_ADD_DATA = "add_to_vocabulary";
@@ -283,7 +284,6 @@ public class Bot extends TelegramLongPollingBot {
                     error.toException().printStackTrace();
                 }
                 FirebaseApp.getInstance().delete();
-                System.err.print("deleted");
             });
         } catch (IOException e) {
             e.printStackTrace();
@@ -313,7 +313,7 @@ public class Bot extends TelegramLongPollingBot {
                     .getInstance()
                     .getReference("users").child(String.valueOf(userId)).child("en-ru"); //TODO change lang path
 
-            CountDownLatch done = new CountDownLatch(1);
+            final AtomicBoolean done = new AtomicBoolean(false);
             ref.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
@@ -323,22 +323,21 @@ public class Bot extends TelegramLongPollingBot {
                         String translation = phrase.child("translation").getValue().toString();
                         String definition = phrase.child("definition").getValue().toString();
                         results.add(new Phrase(id, source, translation, definition));
-                        done.countDown();
+                        done.set(true);
                     }
                 }
 
                 @Override
                 public void onCancelled(DatabaseError error) {
                     error.toException().printStackTrace();
-                    done.countDown();
+                    done.set(true);
                 }
             });
 
-            done.await();
+            while (!done.get());
             FirebaseApp.getInstance().delete();
-            System.err.print("deleted");
             return results;
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
             e.printStackTrace();
             return null;
         }
