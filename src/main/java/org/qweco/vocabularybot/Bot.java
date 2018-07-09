@@ -283,6 +283,7 @@ public class Bot extends TelegramLongPollingBot {
                     error.toException().printStackTrace();
                 }
                 FirebaseApp.getInstance().delete();
+                System.err.print("deleted");
             });
         } catch (IOException e) {
             e.printStackTrace();
@@ -335,6 +336,7 @@ public class Bot extends TelegramLongPollingBot {
 
             done.await();
             FirebaseApp.getInstance().delete();
+            System.err.print("deleted");
             return results;
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
