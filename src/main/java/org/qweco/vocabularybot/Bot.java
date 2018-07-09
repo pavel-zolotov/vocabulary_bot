@@ -327,9 +327,13 @@ public class Bot extends TelegramLongPollingBot {
                         System.err.print(source);
                         String translation = phrase.child("translation").getValue().toString();
                         System.err.print(translation);
-                        String definition = phrase.child("definition").getValue().toString();
-                        System.err.print(definition);
-                        results.add(new Phrase(id, source, translation, definition));
+                        if (phrase.hasChild("definition")) {
+                            String definition = phrase.child("definition").getValue().toString();
+                            System.err.print(definition);
+                            results.add(new Phrase(id, source, translation, definition));
+                        }else {
+                            results.add(new Phrase(id, source, translation));
+                        }
                         System.err.print("added");
                     }
                     done.set(true);
