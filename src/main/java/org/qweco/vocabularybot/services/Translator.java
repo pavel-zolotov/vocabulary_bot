@@ -1,4 +1,4 @@
-package org.qweco.vocabularybot;
+package org.qweco.vocabularybot.services;
 
 import org.apache.commons.io.IOUtils;
 import org.json.JSONObject;
