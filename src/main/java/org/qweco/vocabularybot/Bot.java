@@ -183,7 +183,6 @@ public class Bot extends TelegramLongPollingBot {
                 //quick action buttons
                 ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
                 replyKeyboardMarkup.setResizeKeyboard(true);
-                replyKeyboardMarkup.setOneTimeKeyboard(true);
                 List<KeyboardRow> keyboard = new ArrayList<>();
                 KeyboardRow row = new KeyboardRow();
                 row.add(PHRASE_SHOW_COMMAND);
@@ -201,7 +200,6 @@ public class Bot extends TelegramLongPollingBot {
                 //quick action buttons
                 ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
                 replyKeyboardMarkup.setResizeKeyboard(true);
-                replyKeyboardMarkup.setOneTimeKeyboard(true);
                 List<KeyboardRow> keyboard = new ArrayList<>();
                 KeyboardRow row1 = new KeyboardRow();
                 row1.add(SETTINGS_ALERT_INTERVAL_COMMAND);
@@ -220,7 +218,6 @@ public class Bot extends TelegramLongPollingBot {
                 //quick action buttons
                 ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
                 replyKeyboardMarkup.setResizeKeyboard(true);
-                replyKeyboardMarkup.setOneTimeKeyboard(true);
                 List<KeyboardRow> keyboard = new ArrayList<>();
                 KeyboardRow row = new KeyboardRow();
                 row.add(PHRASE_SHOW_COMMAND);
