@@ -227,8 +227,8 @@ public class Bot extends TelegramLongPollingBot {
                         StringBuilder stringBuilder = new StringBuilder();
                         for (Phrase phrase : phrases) {
                             stringBuilder.append(phrases.indexOf(phrase)+1).append(". ")
-                                    .append("**").append(phrase.source).append("**\n__")
-                                    .append(phrase.translation).append("__\n\n");
+                                    .append("*").append(phrase.source).append("*\n_")
+                                    .append(phrase.translation).append("_\n\n");
 
                             List<InlineKeyboardButton> row = new ArrayList<>();
                             InlineKeyboardButton buttonRemove = new InlineKeyboardButton();
@@ -240,7 +240,7 @@ public class Bot extends TelegramLongPollingBot {
                         inlineKeyboardMarkup.setKeyboard(rows);
                         s.setReplyMarkup(inlineKeyboardMarkup);
                         s.enableMarkdown(true);
-                        s.setText("Here you are:\n" + stringBuilder.toString() + "\n\nClick on button below to delete the relevant phrase");
+                        s.setText("Here you are:\n" + stringBuilder.toString() + "\nDelete phrases using buttons below:");
                     }
                 } catch (DatabaseConnectionException e) {
                     s.setText("⚠ Something went wrong. Try again later.");
