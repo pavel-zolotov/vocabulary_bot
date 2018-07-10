@@ -239,6 +239,7 @@ public class Bot extends TelegramLongPollingBot {
                         }
                         inlineKeyboardMarkup.setKeyboard(rows);
                         s.setReplyMarkup(inlineKeyboardMarkup);
+                        s.enableMarkdown(true);
                         s.setText("Here you are:\n" + stringBuilder.toString() + "\n\nClick on button below to delete the relevant phrase");
                     }
                 } catch (DatabaseConnectionException e) {
