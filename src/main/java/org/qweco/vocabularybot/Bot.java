@@ -227,12 +227,12 @@ public class Bot extends TelegramLongPollingBot {
                         StringBuilder stringBuilder = new StringBuilder();
                         for (Phrase phrase : phrases) {
                             stringBuilder.append(phrases.indexOf(phrase)+1).append(". ")
-                                    .append("*").append(phrase.source).append("*\n_")
-                                    .append(phrase.translation).append("_\n\n");
+                                    .append("**").append(phrase.source).append("**\n__")
+                                    .append(phrase.translation).append("__\n\n");
 
                             List<InlineKeyboardButton> row = new ArrayList<>();
                             InlineKeyboardButton buttonRemove = new InlineKeyboardButton();
-                            buttonRemove.setText(phrases.indexOf(phrase)+1 + ". ❎");
+                            buttonRemove.setText(phrases.indexOf(phrase)+1 + ". ❌");
                             buttonRemove.setCallbackData(PHRASE_REMOVE_DATA+":"+phrase.id);
                             row.add(buttonRemove);
                             rows.add(row);
