@@ -111,30 +111,45 @@ public class Bot extends TelegramLongPollingBot {
     private void handleIncomingCallbackQuery(CallbackQuery callbackQuery) {
         try {
             if (callbackQuery.getData().equals(PHRASE_ADD_DATA)) {
-                //send an answer
+                //create an answer
                 AnswerCallbackQuery answerCallbackQuery = new AnswerCallbackQuery();
-                answerCallbackQuery.setText("✔ Done");
-                answerCallbackQuery.setCallbackQueryId(callbackQuery.getId());
-                execute(answerCallbackQuery);
 
-                //edit message's buttons
-                EditMessageReplyMarkup replyMarkup = new EditMessageReplyMarkup();
-                replyMarkup.setMessageId(callbackQuery.getMessage().getMessageId());
-                replyMarkup.setChatId(callbackQuery.getMessage().getChatId());
-                execute(replyMarkup);
-
-                //save phrase to DB
                 Phrase phrase = new Phrase(callbackQuery.getMessage().getReplyToMessage().getText(),
                         callbackQuery.getMessage().getText());
-                savePhrase(phrase, callbackQuery.getFrom().getId());
-            }else if(callbackQuery.getData().startsWith(PHRASE_REMOVE_DATA)){
+                try {
+                    //save phrase to DB
+                    savePhrase(phrase, callbackQuery.getFrom().getId());
+
+                    //edit message's buttons
+                    EditMessageReplyMarkup replyMarkup = new EditMessageReplyMarkup();
+                    replyMarkup.setMessageId(callbackQuery.getMessage().getMessageId());
+                    replyMarkup.setChatId(callbackQuery.getMessage().getChatId());
+                    execute(replyMarkup);
+
+                    answerCallbackQuery.setText("✔ Done");
+                }catch (DatabaseConnectionException e){
+                    answerCallbackQuery.setText("⚠ Something went wrong. Try again later.");
+                }
+
                 //send an answer
-                AnswerCallbackQuery answerCallbackQuery = new AnswerCallbackQuery();
-                answerCallbackQuery.setText("✔ Done");
                 answerCallbackQuery.setCallbackQueryId(callbackQuery.getId());
                 execute(answerCallbackQuery);
+            }else if(callbackQuery.getData().startsWith(PHRASE_REMOVE_DATA)){
+                //create an answer
+                AnswerCallbackQuery answerCallbackQuery = new AnswerCallbackQuery();
 
-                removePhrase(callbackQuery.getData().split(":")[1], callbackQuery.getFrom().getId());
+                try {
+                    //remove phrase from DB
+                    removePhrase(callbackQuery.getData().split(":")[1], callbackQuery.getFrom().getId());
+
+                    answerCallbackQuery.setText("✔ Done");
+                }catch (DatabaseConnectionException e){
+                    answerCallbackQuery.setText("⚠ Something went wrong. Try again later.");
+                }
+
+                //send an answer
+                answerCallbackQuery.setCallbackQueryId(callbackQuery.getId());
+                execute(answerCallbackQuery);
             }
         } catch (TelegramApiException e) {
             e.printStackTrace();
@@ -199,30 +214,35 @@ public class Bot extends TelegramLongPollingBot {
                 break;
             }
             case PHRASE_SHOW_COMMAND:
-                ArrayList<Phrase> phrases = loadPhrases(msg.getFrom().getId());
-                if (phrases == null || phrases.size() == 0) {
-                    s.setText("No phrases yet");
-                } else {
-                    //quick action buttons
-                    InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
-                    List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+                try {
+                    ArrayList<Phrase> phrases = loadPhrases(msg.getFrom().getId());
 
-                    for (Phrase phrase : phrases) {
-                        List<InlineKeyboardButton> row = new ArrayList<>();
-                        InlineKeyboardButton button = new InlineKeyboardButton();
-                        button.setText("*"+phrase.source+"*\n_"+phrase.translation+"_"); //telegram markdown
-                        button.setCallbackData("show_phrase");
-                        row.add(button);
+                    if (phrases == null || phrases.size() == 0) {
+                        s.setText("No phrases yet");
+                    } else {
+                        //quick action buttons
+                        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+                        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
 
-                        InlineKeyboardButton buttonRemove = new InlineKeyboardButton();
-                        buttonRemove.setText("❎");
-                        buttonRemove.setCallbackData(PHRASE_REMOVE_DATA+":"+phrase.id);
-                        row.add(buttonRemove);
-                        rows.add(row);
+                        StringBuilder stringBuilder = new StringBuilder();
+                        for (Phrase phrase : phrases) {
+                            stringBuilder.append(phrases.indexOf(phrase)+1).append(". ")
+                                    .append("*").append(phrase.source).append("*\n_")
+                                    .append(phrase.translation).append("_\n\n");
+
+                            List<InlineKeyboardButton> row = new ArrayList<>();
+                            InlineKeyboardButton buttonRemove = new InlineKeyboardButton();
+                            buttonRemove.setText(phrases.indexOf(phrase)+1 + ". ❎");
+                            buttonRemove.setCallbackData(PHRASE_REMOVE_DATA+":"+phrase.id);
+                            row.add(buttonRemove);
+                            rows.add(row);
+                        }
+                        inlineKeyboardMarkup.setKeyboard(rows);
+                        s.setReplyMarkup(inlineKeyboardMarkup);
+                        s.setText("Here you are:\n" + stringBuilder.toString() + "\n\nClick on button below to delete the relevant phrase");
                     }
-                    inlineKeyboardMarkup.setKeyboard(rows);
-                    s.setReplyMarkup(inlineKeyboardMarkup);
-                    s.setText("Here you are:");
+                } catch (DatabaseConnectionException e) {
+                    s.setText("⚠ Something went wrong. Try again later.");
                 }
                 break;
             default:
@@ -257,7 +277,7 @@ public class Bot extends TelegramLongPollingBot {
     }
 
 
-    private void savePhrase (Phrase phrase, int userId){
+    private void savePhrase (Phrase phrase, int userId) throws DatabaseConnectionException {
         try {
             // Fetch the service account key JSON file contents
             FileInputStream serviceAccount = new FileInputStream("vocabulary-bot-firebase-adminsdk-nopvk-fa58da275b.json");
@@ -280,18 +300,29 @@ public class Bot extends TelegramLongPollingBot {
 
             // Generate a reference to a new location and add some data using push()
             DatabaseReference pushedRef = ref.push();
+
+            CountDownLatch done = new CountDownLatch(1);
+            final AtomicBoolean isSucceed = new AtomicBoolean(false);
             pushedRef.setValue(phrase, (DatabaseError error, DatabaseReference reference) -> {
-                if (error != null){
+                if (error == null){
+                    isSucceed.set(true);
+                }else{
                     error.toException().printStackTrace();
                 }
-                FirebaseApp.getInstance().delete();
+                done.countDown();
             });
-        } catch (IOException e) {
+
+            done.await();
+            FirebaseApp.getInstance().delete();
+            if (!isSucceed.get()){
+                throw new DatabaseConnectionException();
+            }
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
     }
 
-    private ArrayList<Phrase> loadPhrases (int userId) {
+    private ArrayList<Phrase> loadPhrases (int userId) throws DatabaseConnectionException {
         try {
             ArrayList<Phrase> results = new ArrayList<>();
 
@@ -314,52 +345,45 @@ public class Bot extends TelegramLongPollingBot {
                     .getInstance()
                     .getReference("users").child(String.valueOf(userId)).child("en-ru"); //TODO change lang path
 
-            System.err.print("1");
-            final AtomicBoolean done = new AtomicBoolean(false);
+            CountDownLatch done = new CountDownLatch(1);
+            final AtomicBoolean isSucceed = new AtomicBoolean(false);
             ref.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
-                    System.err.print("-1");
-                    System.err.print(dataSnapshot.getChildrenCount());
                     for (DataSnapshot phrase : dataSnapshot.getChildren()) {
                         String id = phrase.getKey();
-                        System.err.print(id);
                         String source = phrase.child("source").getValue().toString();
-                        System.err.print(source);
                         String translation = phrase.child("translation").getValue().toString();
-                        System.err.print(translation);
                         if (phrase.hasChild("definition")) {
                             String definition = phrase.child("definition").getValue().toString();
-                            System.err.print(definition);
                             results.add(new Phrase(id, source, translation, definition));
                         }else {
                             results.add(new Phrase(id, source, translation, null));
                         }
-                        System.err.print("added");
                     }
-                    done.set(true);
-                    System.err.print("-2");
+                    isSucceed.set(true);
+                    done.countDown();
                 }
 
                 @Override
                 public void onCancelled(DatabaseError error) {
                     error.toException().printStackTrace();
-                    done.set(true);
+                    done.countDown();
                 }
             });
-            System.err.print("2");
-            while (!done.get());
-            System.err.print("3");
+            done.await();
             FirebaseApp.getInstance().delete();
-            System.err.print("4");
+            if (!isSucceed.get()){
+                throw new DatabaseConnectionException();
+            }
             return results;
-        } catch (IOException e) {
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
             return null;
         }
     }
 
-    private void removePhrase (String phraseId, int userId){
+    private void removePhrase (String phraseId, int userId) throws DatabaseConnectionException {
         try {
             // Fetch the service account key JSON file contents
             FileInputStream serviceAccount = new FileInputStream("vocabulary-bot-firebase-adminsdk-nopvk-fa58da275b.json");
@@ -379,10 +403,24 @@ public class Bot extends TelegramLongPollingBot {
             DatabaseReference ref = FirebaseDatabase
                     .getInstance()
                     .getReference("users").child(String.valueOf(userId)).child("en-ru").child(phraseId); //TODO change lang path
-            ref.removeValueAsync();
 
+            CountDownLatch done = new CountDownLatch(1);
+            final AtomicBoolean isSucceed = new AtomicBoolean(false);
+            ref.removeValue((error, ref1) -> {
+                if (error == null){
+                    isSucceed.set(true);
+                }else{
+                    error.toException().printStackTrace();
+                }
+                done.countDown();
+            });
+
+            done.await();
             FirebaseApp.getInstance().delete();
-        } catch (IOException e) {
+            if (!isSucceed.get()){
+                throw new DatabaseConnectionException();
+            }
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -416,4 +454,6 @@ public class Bot extends TelegramLongPollingBot {
             }
         }*/
     }
+
+    private class DatabaseConnectionException extends Exception{}
 }
