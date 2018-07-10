@@ -145,13 +145,6 @@ public class Bot extends TelegramLongPollingBot {
 
                     ArrayList<Phrase> phrases = loadPhrases(callbackQuery.getFrom().getId());
 
-                    //edit message's buttons
-                    EditMessageReplyMarkup replyMarkup = new EditMessageReplyMarkup();
-                    replyMarkup.setMessageId(callbackQuery.getMessage().getMessageId());
-                    replyMarkup.setChatId(callbackQuery.getMessage().getChatId());
-                    replyMarkup.setReplyMarkup(buildPhrasesListMessageReplyMarkup(phrases));
-                    execute(replyMarkup);
-
                     //edit phrases list
                     EditMessageText messageText = new EditMessageText();
                     messageText.setChatId(callbackQuery.getMessage().getChatId());
@@ -159,6 +152,13 @@ public class Bot extends TelegramLongPollingBot {
                     messageText.setText(buildPhrasesListMessageText(phrases));
                     messageText.enableMarkdown(true);
                     execute(messageText);
+
+                    //edit message's buttons
+                    EditMessageReplyMarkup replyMarkup = new EditMessageReplyMarkup();
+                    replyMarkup.setMessageId(callbackQuery.getMessage().getMessageId());
+                    replyMarkup.setChatId(callbackQuery.getMessage().getChatId());
+                    replyMarkup.setReplyMarkup(buildPhrasesListMessageReplyMarkup(phrases));
+                    execute(replyMarkup);
 
                     answerCallbackQuery.setText("✔ Done");
                 }catch (DatabaseConnectionException e){
