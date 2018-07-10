@@ -17,6 +17,7 @@ import org.telegram.telegrambots.TelegramBotsApi;
 import org.telegram.telegrambots.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.methods.updatingmessages.EditMessageReplyMarkup;
+import org.telegram.telegrambots.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.api.objects.CallbackQuery;
 import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.api.objects.Update;
@@ -142,6 +143,23 @@ public class Bot extends TelegramLongPollingBot {
                     //remove phrase from DB
                     removePhrase(callbackQuery.getData().split(":")[1], callbackQuery.getFrom().getId());
 
+                    ArrayList<Phrase> phrases = loadPhrases(callbackQuery.getFrom().getId());
+
+                    //edit message's buttons
+                    EditMessageReplyMarkup replyMarkup = new EditMessageReplyMarkup();
+                    replyMarkup.setMessageId(callbackQuery.getMessage().getMessageId());
+                    replyMarkup.setChatId(callbackQuery.getMessage().getChatId());
+                    replyMarkup.setReplyMarkup(buildPhrasesListMessageReplyMarkup(phrases));
+                    execute(replyMarkup);
+
+                    //edit phrases list
+                    EditMessageText messageText = new EditMessageText();
+                    messageText.setChatId(callbackQuery.getMessage().getChatId());
+                    messageText.setMessageId(callbackQuery.getMessage().getMessageId());
+                    messageText.setText(buildPhrasesListMessageText(phrases));
+                    messageText.enableMarkdown(true);
+                    execute(messageText);
+
                     answerCallbackQuery.setText("✔ Done");
                 }catch (DatabaseConnectionException e){
                     answerCallbackQuery.setText("⚠ Something went wrong. Try again later.");
@@ -216,32 +234,9 @@ public class Bot extends TelegramLongPollingBot {
             case PHRASE_SHOW_COMMAND:
                 try {
                     ArrayList<Phrase> phrases = loadPhrases(msg.getFrom().getId());
-
-                    if (phrases == null || phrases.size() == 0) {
-                        s.setText("No phrases yet");
-                    } else {
-                        //quick action buttons
-                        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
-                        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
-
-                        StringBuilder stringBuilder = new StringBuilder();
-                        for (Phrase phrase : phrases) {
-                            stringBuilder.append(phrases.indexOf(phrase)+1).append(". ")
-                                    .append("*").append(phrase.source).append("*\n_")
-                                    .append(phrase.translation).append("_\n\n");
-
-                            List<InlineKeyboardButton> row = new ArrayList<>();
-                            InlineKeyboardButton buttonRemove = new InlineKeyboardButton();
-                            buttonRemove.setText(phrases.indexOf(phrase)+1 + ". ❌");
-                            buttonRemove.setCallbackData(PHRASE_REMOVE_DATA+":"+phrase.id);
-                            row.add(buttonRemove);
-                            rows.add(row);
-                        }
-                        inlineKeyboardMarkup.setKeyboard(rows);
-                        s.setReplyMarkup(inlineKeyboardMarkup);
-                        s.enableMarkdown(true);
-                        s.setText("Here you are:\n" + stringBuilder.toString() + "\nDelete phrases using buttons below:");
-                    }
+                    s.enableMarkdown(true);
+                    s.setText(buildPhrasesListMessageText(phrases));
+                    s.setReplyMarkup(buildPhrasesListMessageReplyMarkup(phrases));
                 } catch (DatabaseConnectionException e) {
                     s.setText("⚠ Something went wrong. Try again later.");
                 }
@@ -454,6 +449,41 @@ public class Bot extends TelegramLongPollingBot {
                 e.printStackTrace();
             }
         }*/
+    }
+
+    private String buildPhrasesListMessageText (ArrayList<Phrase> phrases){
+        if (phrases == null || phrases.size() == 0) {
+            return "No phrases yet";
+        } else {
+            StringBuilder stringBuilder = new StringBuilder();
+            for (Phrase phrase : phrases) {
+                stringBuilder.append(phrases.indexOf(phrase)+1).append(". ")
+                        .append("*").append(phrase.source).append("*\n_")
+                        .append(phrase.translation).append("_\n\n");
+            }
+
+            return "Here you are:\n" + stringBuilder.toString() + "\nDelete phrases using buttons below:";
+        }
+    }
+
+    private InlineKeyboardMarkup buildPhrasesListMessageReplyMarkup(ArrayList<Phrase> phrases) {
+        if (phrases == null || phrases.size() == 0) {
+            return new InlineKeyboardMarkup();
+        } else {
+            InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+            List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+
+            for (Phrase phrase : phrases) {
+                List<InlineKeyboardButton> row = new ArrayList<>();
+                InlineKeyboardButton buttonRemove = new InlineKeyboardButton();
+                buttonRemove.setText(phrases.indexOf(phrase)+1 + ". ❌");
+                buttonRemove.setCallbackData(PHRASE_REMOVE_DATA+":"+phrase.id);
+                row.add(buttonRemove);
+                rows.add(row);
+            }
+            inlineKeyboardMarkup.setKeyboard(rows);
+            return inlineKeyboardMarkup;
+        }
     }
 
     private class DatabaseConnectionException extends Exception{}
