@@ -58,7 +58,7 @@ public class Translator {
                 builder.append("*"+lexicalCategory+"*\n");
                 for (int i1 = 0; i1 < entries.length(); i1++){
                     JSONArray senses = entries.getJSONObject(i1).getJSONArray("senses");
-                    for (int i2 = 0; i2 < entries.length(); i2++) {
+                    for (int i2 = 0; i2 < senses.length(); i2++) {
                         String definition = senses.getJSONObject(i2).getJSONArray("definitions").getString(0);
                         builder.append("• " + definition + "\n");
                     }
@@ -68,7 +68,7 @@ public class Translator {
         }
         catch (Exception e) {
             e.printStackTrace();
-            return e.toString();
+            return "";
         }
     }
 }

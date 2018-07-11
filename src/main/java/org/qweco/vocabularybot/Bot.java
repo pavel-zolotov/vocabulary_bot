@@ -255,7 +255,9 @@ public class Bot extends TelegramLongPollingBot {
                     String text = "_"+translation+"_";
                     if (!msg.getText().trim().contains(" ")){ //is one word?
                         String definition = Translator.getDefinitions(lang, msg.getText().trim());
-                        text += "\n"+definition;
+                        if (definition != "") {
+                            text += "\n" + definition;
+                        }
                     }
 
                     //quick action buttons
