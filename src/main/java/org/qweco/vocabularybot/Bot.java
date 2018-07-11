@@ -111,18 +111,25 @@ public class Bot extends TelegramLongPollingBot {
 
     private void handleIncomingCallbackQuery(CallbackQuery callbackQuery) {
         try {
-            if (callbackQuery.getData().equals(PHRASE_ADD_DATA)) {
+            if (callbackQuery.getData().startsWith(PHRASE_ADD_DATA)) {
                 //create an answer
                 AnswerCallbackQuery answerCallbackQuery = new AnswerCallbackQuery();
 
-                Phrase phrase;
-                if (callbackQuery.getMessage().getText().split("_").length == 3){ //if contains definition
+                String sourceText = callbackQuery.getMessage().getReplyToMessage().getText();
+
+                Phrase phrase = null;
+                if (!sourceText.trim().contains(" ")) { //is one word?
+                    String definition = Translator.getDefinitions(callbackQuery.getData().split(":")[1], sourceText.trim());
+                    if (!definition.equals("")) {
+                        phrase = new Phrase(sourceText,
+                                callbackQuery.getMessage().getText(),
+                                definition);
+                    }
+                }
+
+                if (phrase == null){
                     phrase = new Phrase(callbackQuery.getMessage().getReplyToMessage().getText(),
-                            callbackQuery.getMessage().getText().split("_")[1],
-                            callbackQuery.getMessage().getText().split("_")[2]);
-                }else {
-                    phrase = new Phrase(callbackQuery.getMessage().getReplyToMessage().getText(),
-                            callbackQuery.getMessage().getText().split("_")[1]);
+                            callbackQuery.getMessage().getText());
                 }
 
                 try {
@@ -252,11 +259,19 @@ public class Bot extends TelegramLongPollingBot {
                     String translation = data[0];
                     String lang = data[1].split("-")[0]; //get the input lang
 
-                    String text = "_"+translation+"_";
                     if (!msg.getText().trim().contains(" ")){ //is one word?
                         String definition = Translator.getDefinitions(lang, msg.getText().trim());
-                        if (definition != "") {
-                            text += "\n" + definition;
+                        if (!definition.equals("")) { //send definition as separate message
+                            SendMessage sDef = new SendMessage();
+                            sDef.setChatId(msg.getChatId());
+                            sDef.setText(definition);
+                            sDef.enableMarkdown(true);
+                            sDef.setReplyToMessageId(msg.getMessageId());
+                            try {
+                                execute(sDef);
+                            } catch (TelegramApiException e) {
+                                e.printStackTrace();
+                            }
                         }
                     }
 
@@ -266,13 +281,13 @@ public class Bot extends TelegramLongPollingBot {
                     List<InlineKeyboardButton> row = new ArrayList<>();
                     InlineKeyboardButton button = new InlineKeyboardButton();
                     button.setText("➕ Add to vocabulary");
-                    button.setCallbackData(PHRASE_ADD_DATA);
+                    button.setCallbackData(PHRASE_ADD_DATA+":"+lang);
                     row.add(button);
                     rows.add(row);
                     inlineKeyboardMarkup.setKeyboard(rows);
                     s.setReplyMarkup(inlineKeyboardMarkup);
 
-                    s.setText(text);
+                    s.setText("_"+translation+"_");
                     s.enableMarkdown(true);
                     s.setReplyToMessageId(msg.getMessageId());
                 } catch (IOException e) {
