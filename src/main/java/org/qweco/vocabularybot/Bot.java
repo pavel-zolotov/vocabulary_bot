@@ -88,7 +88,7 @@ public class Bot extends TelegramLongPollingBot {
 
     @Override
     public String getBotUsername() {
-        return BotConfig.USER;
+        return "Vocabulary Bot";
     }
 
     @Override
@@ -115,8 +115,16 @@ public class Bot extends TelegramLongPollingBot {
                 //create an answer
                 AnswerCallbackQuery answerCallbackQuery = new AnswerCallbackQuery();
 
-                Phrase phrase = new Phrase(callbackQuery.getMessage().getReplyToMessage().getText(),
-                        callbackQuery.getMessage().getText());
+                Phrase phrase;
+                if (callbackQuery.getMessage().getText().split("_").length == 3){ //if contains definition
+                    phrase = new Phrase(callbackQuery.getMessage().getReplyToMessage().getText(),
+                            callbackQuery.getMessage().getText().split("_")[1],
+                            callbackQuery.getMessage().getText().split("_")[2]);
+                }else {
+                    phrase = new Phrase(callbackQuery.getMessage().getReplyToMessage().getText(),
+                            callbackQuery.getMessage().getText().split("_")[1]);
+                }
+
                 try {
                     //save phrase to DB
                     savePhrase(phrase, callbackQuery.getFrom().getId());
@@ -240,7 +248,15 @@ public class Bot extends TelegramLongPollingBot {
                 break;
             default:
                 try {
-                    String translation = Translator.translate("ru", msg.getText());
+                    String[] data = Translator.translate("ru", msg.getText());
+                    String translation = data[0];
+                    String lang = data[1].split("-")[0]; //get the input lang
+
+                    String text = "_"+translation+"_";
+                    if (!msg.getText().trim().contains(" ")){ //is one word?
+                        String definition = Translator.getDefinitions(lang, msg.getText().trim());
+                        text += "\n"+definition;
+                    }
 
                     //quick action buttons
                     InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
@@ -254,7 +270,8 @@ public class Bot extends TelegramLongPollingBot {
                     inlineKeyboardMarkup.setKeyboard(rows);
                     s.setReplyMarkup(inlineKeyboardMarkup);
 
-                    s.setText(translation);
+                    s.setText(text);
+                    s.enableMarkdown(true);
                     s.setReplyToMessageId(msg.getMessageId());
                 } catch (IOException e) {
                     e.printStackTrace();
