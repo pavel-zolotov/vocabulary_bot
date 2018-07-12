@@ -442,9 +442,11 @@ public class Bot extends TelegramLongPollingBot {
                 public void onDataChange(DataSnapshot dataSnapshot) {
                     for (DataSnapshot user : dataSnapshot.getChildren()) {
                         ArrayList<Phrase> results = new ArrayList<>();
-                        int limit = 3;
+                        final int limit;
                         if (user.hasChild("wordScope")){
                             limit = Integer.valueOf(user.child("wordScope").getValue().toString());
+                        }else{
+                            limit = 3;
                         }
 
                         // load all phrases
