@@ -242,7 +242,7 @@ public class Bot extends TelegramLongPollingBot {
                 s.setReplyMarkup(replyKeyboardMarkup);
                 s.setText("Change some settings here. Defaults:\n" +
                         "Alert interval: 4 hours (from 12:00 to 20:00)\n" +
-                        "Words in alert: 3" +
+                        "Words in alert: 3\n" +
                         "Target language: Russian");
                 break;
             }
