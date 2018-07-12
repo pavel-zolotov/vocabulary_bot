@@ -318,7 +318,7 @@ public class Bot extends TelegramLongPollingBot {
 
     private void savePhrase (Phrase phrase, String userId) throws DatabaseConnectionException {
         try {
-            initializeFirebase(userId);
+            initializeFirebase(userId, null);
 
             // The app only has access as defined in the Security Rules
             DatabaseReference ref = FirebaseDatabase
@@ -353,7 +353,7 @@ public class Bot extends TelegramLongPollingBot {
         try {
             ArrayList<Phrase> results = new ArrayList<>();
 
-            initializeFirebase(userId);
+            initializeFirebase(userId, null);
 
             // The app only has access as defined in the Security Rules
             DatabaseReference ref = FirebaseDatabase
@@ -446,7 +446,7 @@ public class Bot extends TelegramLongPollingBot {
 
     private void removePhrase (String phraseId, String phraseLang, String userId) throws DatabaseConnectionException {
         try {
-            initializeFirebase(userId);
+            initializeFirebase(userId, null);
 
             // The app only has access as defined in the Security Rules
             DatabaseReference ref = FirebaseDatabase
@@ -476,7 +476,7 @@ public class Bot extends TelegramLongPollingBot {
 
     private void sendAlerts() {
         try {
-            initializeFirebase(null);
+            initializeFirebase(null, "alerts");
 
             // The app only has access as defined in the Security Rules
             DatabaseReference ref = FirebaseDatabase
@@ -632,7 +632,7 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
-    private void initializeFirebase (@Nullable String uid) throws IOException {
+    private void initializeFirebase (@Nullable String uid, @Nullable String name) throws IOException {
         // Fetch the service account key JSON file contents
         FileInputStream serviceAccount = new FileInputStream("vocabulary-bot-firebase-adminsdk-nopvk-fa58da275b.json");
 
@@ -647,7 +647,11 @@ public class Bot extends TelegramLongPollingBot {
             options.setDatabaseAuthVariableOverride(auth);
         }
 
-        FirebaseApp.initializeApp(options.build());
+        if (name != null){
+            FirebaseApp.initializeApp(options.build(), name);
+        }else {
+            FirebaseApp.initializeApp(options.build());
+        }
     }
 
     private String countryCode2EmojiFlag (String country){
