@@ -576,7 +576,7 @@ public class Bot extends TelegramLongPollingBot {
                 buttonRemove.setText(phrases.indexOf(phrase)+1 + ". ❌");
                 buttonRemove.setCallbackData(PHRASE_REMOVE_DATA+":"+phrase.id+":"+phrase.lang);
 
-                if (rows.get(rows.size()-1).size() < 3){
+                if (rows.size() != 0 && rows.get(rows.size()-1).size() < 3){
                     rows.get(rows.size()-1).add(buttonRemove);
                 }else {
                     List<InlineKeyboardButton> row = new ArrayList<>();
