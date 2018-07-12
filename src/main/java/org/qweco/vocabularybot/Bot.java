@@ -580,9 +580,10 @@ public class Bot extends TelegramLongPollingBot {
                 if (phrases.indexOf(phrase) == 0 || !phrases.get(phrases.indexOf(phrase) - 1).lang.equals(phrase.lang)){
                     String langFrom = phrase.lang.split("-")[0];
                     String langTo = phrase.lang.split("-")[1];
-                    stringBuilder.append(countryCode2EmojiFlag(langFrom))
+                    stringBuilder.append(countryCode2EmojiFlag(langFrom.toUpperCase()))
                             .append(" → ")
-                            .append(countryCode2EmojiFlag(langTo));
+                            .append(countryCode2EmojiFlag(langTo.toUpperCase()))
+                            .append("\n");
                 }
 
                 stringBuilder.append(phrases.indexOf(phrase)+1).append(". ");
