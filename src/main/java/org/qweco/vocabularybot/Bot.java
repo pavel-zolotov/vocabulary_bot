@@ -467,7 +467,7 @@ public class Bot extends TelegramLongPollingBot {
                             if (results.indexOf(phrase) == 0){
                                 text += "🔔 Time to repeat new words:\n";
                             }
-                            text += "• *"+phrase.source+"*\n";
+                            text += "🔹 *"+phrase.source+"*\n";
                             text += "_"+phrase.translation+"_\n";
                             if (phrase.definition != null){
                                 text += phrase.definition + "\n";
@@ -536,12 +536,17 @@ public class Bot extends TelegramLongPollingBot {
             List<List<InlineKeyboardButton>> rows = new ArrayList<>();
 
             for (Phrase phrase : phrases) {
-                List<InlineKeyboardButton> row = new ArrayList<>();
                 InlineKeyboardButton buttonRemove = new InlineKeyboardButton();
                 buttonRemove.setText(phrases.indexOf(phrase)+1 + ". ❌");
                 buttonRemove.setCallbackData(PHRASE_REMOVE_DATA+":"+phrase.id+":"+phrase.lang);
-                row.add(buttonRemove);
-                rows.add(row);
+
+                if (rows.get(rows.size()-1).size() < 3){
+                    rows.get(rows.size()-1).add(buttonRemove);
+                }else {
+                    List<InlineKeyboardButton> row = new ArrayList<>();
+                    row.add(buttonRemove);
+                    rows.add(row);
+                }
             }
             inlineKeyboardMarkup.setKeyboard(rows);
             return inlineKeyboardMarkup;
