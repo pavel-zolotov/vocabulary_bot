@@ -28,6 +28,7 @@ import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
 import org.telegram.telegrambots.exceptions.TelegramApiRequestException;
+import org.telegram.telegrambots.logging.BotLogger;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -450,13 +451,19 @@ public class Bot extends TelegramLongPollingBot {
                             }
                         }
 
+                        BotLogger.warn("test", String.valueOf(results.size()));
+
                         // delete disabled, sort by repeats and delete all over limit
                         results.removeIf((phrase -> !phrase.enabled));
                         results.sort(Comparator.comparingInt(phrase -> phrase.repeats));
                         results.removeIf((phrase -> results.indexOf(phrase) > limit));
 
+                        BotLogger.warn("test", String.valueOf(results.size()));
+
                         // send message for every phrase and increase repeat amount in DB
                         results.forEach(phrase -> {
+                            BotLogger.warn("test", String.valueOf(phrase.id));
+
                             SendMessage sendMessage = new SendMessage();
                             sendMessage.enableMarkdown(true);
                             sendMessage.setChatId(user.getKey());
@@ -472,11 +479,14 @@ public class Bot extends TelegramLongPollingBot {
                             } catch (TelegramApiException e) {
                                 e.printStackTrace();
                             }
+                            BotLogger.warn("test", "done");
 
                             user.child(phrase.lang).child(phrase.id).child("repeats").getRef().setValueAsync(phrase.repeats+1);
+                            BotLogger.warn("test", "done2");
                         });
                     }
 
+                    BotLogger.warn("test", "done all");
                     done.countDown();
                 }
 
@@ -487,6 +497,7 @@ public class Bot extends TelegramLongPollingBot {
                 }
             });
             done.await();
+            BotLogger.warn("test", "done all2");
             app.delete();
         }catch (IOException | InterruptedException e){
             e.printStackTrace();
