@@ -78,7 +78,7 @@ public class TimerExecutor {
             }
         };
         if (task.getTimes() != 0) {
-            final long delay = 30;
+            final long delay = 60;
             executorService.schedule(taskWrapper, delay, TimeUnit.SECONDS);
         }
     }

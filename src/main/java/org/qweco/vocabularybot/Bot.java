@@ -34,7 +34,10 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -45,9 +48,9 @@ public class Bot extends TelegramLongPollingBot {
     final private static String PHRASE_REMOVE_DATA = "remove_from_vocabulary";
     final private static String PHRASE_SHOW_COMMAND = "📑 Show vocabulary";
     final private static String SETTINGS_COMMAND = "⚙ Settings";
-    final private static String SETTINGS_LANG_COMMAND = "🌐 Language";
+    final private static String SETTINGS_LANG_COMMAND = "🌐 Target language";
     final private static String SETTINGS_ALERT_INTERVAL_COMMAND = "🕐 Alert interval";
-    final private static String SETTINGS_ALERT_SCOPE_COMMAND = "📋 Scope of words per alert";
+    final private static String SETTINGS_ALERT_SCOPE_COMMAND = "📋 Words in alert";
     final private static String SETTINGS_BACK = "⬅ Back";
 
     public static void main (String[] args){
@@ -228,7 +231,7 @@ public class Bot extends TelegramLongPollingBot {
                 replyKeyboardMarkup.setResizeKeyboard(true);
                 List<KeyboardRow> keyboard = new ArrayList<>();
                 KeyboardRow row1 = new KeyboardRow();
-                //row1.add(SETTINGS_ALERT_INTERVAL_COMMAND); //TODO
+                row1.add(SETTINGS_ALERT_INTERVAL_COMMAND);
                 row1.add(SETTINGS_ALERT_SCOPE_COMMAND);
                 keyboard.add(row1);
                 KeyboardRow row2 = new KeyboardRow();
@@ -237,7 +240,10 @@ public class Bot extends TelegramLongPollingBot {
                 keyboard.add(row2);
                 replyKeyboardMarkup.setKeyboard(keyboard);
                 s.setReplyMarkup(replyKeyboardMarkup);
-                s.setText("Change some settings here");
+                s.setText("Change some settings here. Defaults:\n" +
+                        "Alert interval: 4 hours (from 12:00 to 20:00)\n" +
+                        "Words in alert: 3" +
+                        "Target language: Russian");
                 break;
             }
             case SETTINGS_BACK: {
@@ -252,6 +258,36 @@ public class Bot extends TelegramLongPollingBot {
                 replyKeyboardMarkup.setKeyboard(keyboard);
                 s.setReplyMarkup(replyKeyboardMarkup);
                 s.setText("I'm ready!");
+                break;
+            }
+            case SETTINGS_LANG_COMMAND:
+            case SETTINGS_ALERT_INTERVAL_COMMAND:
+            case SETTINGS_ALERT_SCOPE_COMMAND: {
+                /*ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
+                replyKeyboardMarkup.setResizeKeyboard(true);
+                List<KeyboardRow> keyboard = new ArrayList<>();
+
+                SortedSet<String> allLanguages = new TreeSet<String>();
+                String[] languages = Locale.getISOLanguages();
+                for (int i = 0; i < languages.length; i++){
+                    if (keyboard.get(keyboard.size()-1).size() < 3){
+                        keyboard.get(keyboard.size()-1).add(buttonRemove);
+                    }else {
+                        KeyboardRow row = new KeyboardRow();
+                        row.add(buttonRemove);
+                        keyboard.add(row);
+                    }
+                    Locale loc = new Locale(languages[i]);
+                    allLanguages.add(loc.getDisplayLanguage());
+                }
+
+                row.add(PHRASE_SHOW_COMMAND);
+                row.add(SETTINGS_COMMAND);
+                replyKeyboardMarkup.setKeyboard(keyboard);
+                s.setReplyMarkup(replyKeyboardMarkup);
+                s.setText("Select a language:");*/
+                s.setReplyMarkup(new ReplyKeyboardMarkup());
+                s.setText("Under development");
                 break;
             }
             case PHRASE_SHOW_COMMAND:
