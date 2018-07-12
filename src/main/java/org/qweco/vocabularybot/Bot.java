@@ -123,23 +123,24 @@ public class Bot extends TelegramLongPollingBot {
                 AnswerCallbackQuery answerCallbackQuery = new AnswerCallbackQuery();
 
                 String sourceText = callbackQuery.getMessage().getReplyToMessage().getText();
-                String lang = callbackQuery.getData().split(":")[1].split("-")[0]; //get the input lang
+                String fullLang = callbackQuery.getData().split(":")[1];
+                String inputLang = fullLang.split("-")[0]; //get the input lang
 
                 Phrase phrase = null;
                 if (!sourceText.trim().contains(" ")) { //is one word?
-                    String definition = Translator.getDefinitions(lang, sourceText.trim());
+                    String definition = Translator.getDefinitions(inputLang, sourceText.trim());
                     if (!definition.equals("")) {
                         phrase = new Phrase(sourceText,
                                 callbackQuery.getMessage().getText(),
                                 definition,
-                                lang, 0, 0, true);
+                                fullLang, 0, 0, true);
                     }
                 }
 
                 if (phrase == null){
                     phrase = new Phrase(callbackQuery.getMessage().getReplyToMessage().getText(),
                             callbackQuery.getMessage().getText(),
-                            lang, 0, 0, true);
+                            fullLang, 0, 0, true);
                 }
 
                 try {
@@ -480,7 +481,7 @@ public class Bot extends TelegramLongPollingBot {
 
             // The app only has access as defined in the Security Rules
             DatabaseReference ref = FirebaseDatabase
-                    .getInstance()
+                    .getInstance("alerts")
                     .getReference("users");
 
             CountDownLatch done = new CountDownLatch(1);
