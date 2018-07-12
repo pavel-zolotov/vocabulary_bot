@@ -60,9 +60,10 @@ public class Translator {
                 for (int i1 = 0; i1 < entries.length(); i1++){
                     JSONArray senses = entries.getJSONObject(i1).getJSONArray("senses");
                     for (int i2 = 0; i2 < senses.length(); i2++) {
-                        BotLogger.warn("test", builder.toString());
-                        String definition = senses.getJSONObject(i2).getJSONArray("definitions").getString(0);
-                        builder.append("• " + definition + "\n");
+                        if (senses.getJSONObject(i2).has("definitions")) {
+                            String definition = senses.getJSONObject(i2).getJSONArray("definitions").getString(0);
+                            builder.append("• " + definition + "\n");
+                        }
                     }
                 }
             }
