@@ -27,11 +27,8 @@ import org.telegram.telegrambots.api.objects.replykeyboard.buttons.InlineKeyboar
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
-import org.telegram.telegrambots.exceptions.TelegramApiRequestException;
-import org.telegram.telegrambots.logging.BotLogger;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -459,19 +456,22 @@ public class Bot extends TelegramLongPollingBot {
                         // delete disabled, sort by repeats and delete all over limit
                         results.removeIf((phrase -> !phrase.enabled));
                         results.sort(Comparator.comparingInt(phrase -> phrase.repeats));
-                        results.removeIf((phrase -> results.indexOf(phrase) > limit));
+                        results.removeIf((phrase -> results.indexOf(phrase) >= limit));
 
                         // send message for every phrase and increase repeat amount in DB
                         results.forEach(phrase -> {
                             SendMessage sendMessage = new SendMessage();
                             sendMessage.enableMarkdown(true);
                             sendMessage.setChatId(user.getKey());
-                            String text = "Time to repeat new words:\n";
-                            text += "• *"+phrase.source+"*\n";
-                            if (phrase.definition != null){
-                                text += phrase.definition + "\n\n";
+                            String text = "";
+                            if (results.indexOf(phrase) == 0){
+                                text += "🔔 Time to repeat new words:\n";
                             }
-                            text += "_"+phrase.translation+"_";
+                            text += "• *"+phrase.source+"*\n";
+                            text += "_"+phrase.translation+"_\n";
+                            if (phrase.definition != null){
+                                text += phrase.definition + "\n";
+                            }
                             sendMessage.setText(text);
                             try {
                                 execute(sendMessage);
