@@ -396,58 +396,6 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
-    /*private ArrayList<Phrase> loadAllUsersPhrases (int limit) throws DatabaseConnectionException {
-        try {
-            ArrayList<Phrase> results = new ArrayList<>();
-
-            initializeFirebase(null);
-
-            // The app only has access as defined in the Security Rules
-            DatabaseReference ref = FirebaseDatabase
-                        .getInstance()
-                        .getReference("users");
-
-            CountDownLatch done = new CountDownLatch(1);
-            final AtomicBoolean isSucceed = new AtomicBoolean(false);
-            ref.addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    for (DataSnapshot user : dataSnapshot.getChildren()) {
-                        user.child("wordScope").getValue();
-                        for (DataSnapshot lang : user.getChildren()) {
-                            for (DataSnapshot phrase : lang.getChildren()) {
-                                results.add(dataSnapshot2Phrase(phrase, lang.getKey()));
-                            }
-                        }
-                    }
-
-                    isSucceed.set(true);
-                    done.countDown();
-                }
-
-                @Override
-                public void onCancelled(DatabaseError error) {
-                    error.toException().printStackTrace();
-                    done.countDown();
-                }
-            });
-            done.await();
-
-            // sort by repeats and delete all over limit
-            results.sort(Comparator.comparingInt(phrase -> phrase.repeats));
-            results.removeIf((phrase -> results.indexOf(phrase) > limit));
-
-            FirebaseApp.getInstance().delete();
-            if (!isSucceed.get()){
-                throw new DatabaseConnectionException();
-            }
-            return results;
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }*/
-
     private void removePhrase (String phraseId, String phraseLang, String userId) throws DatabaseConnectionException {
         try {
             initializeFirebase(userId, null);
@@ -543,35 +491,6 @@ public class Bot extends TelegramLongPollingBot {
         }catch (IOException | InterruptedException e){
             e.printStackTrace();
         }
-
-
-        /*List<Phrase> phrases = loadPhrases();
-        for (Phrase phrase : sendAlerts) {
-            synchronized (Thread.currentThread()) {
-                try {
-                    Thread.currentThread().wait(35);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-            String[] userOptions = DatabaseManager.getInstance().getUserWeatherOptions(weatherAlert.getUserId());
-            String weather = WeatherService.getInstance().fetchWeatherAlert(weatherAlert.getCityId(),
-                    weatherAlert.getUserId(), userOptions[0], userOptions[1]);
-            SendMessage sendMessage = new SendMessage();
-            sendMessage.enableMarkdown(true);
-            sendMessage.setChatId(String.valueOf(weatherAlert.getUserId()));
-            sendMessage.setText(weather);
-            try {
-                sendMessage(sendMessage);
-            } catch (TelegramApiRequestException e) {
-                e.printStackTrace();
-                if (e.getApiResponse().contains("Can't access the chat") || e.getApiResponse().contains("Bot was blocked by the user")) {
-                    DatabaseManager.getInstance().deleteAlertsForUser(weatherAlert.getUserId());
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }*/
     }
 
     private String buildPhrasesListMessageText (ArrayList<Phrase> phrases){
