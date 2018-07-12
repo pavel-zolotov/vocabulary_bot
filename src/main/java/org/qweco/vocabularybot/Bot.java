@@ -492,7 +492,7 @@ public class Bot extends TelegramLongPollingBot {
             // The app only has access as defined in the Security Rules
             DatabaseReference ref = FirebaseDatabase
                     .getInstance()
-                    .getReference("users").child(userId).child(phraseLang).child(phraseId);
+                    .getReference("users").child(userId).child(phraseLang).child(phraseId).child("enabled");
 
             CountDownLatch done = new CountDownLatch(1);
             final AtomicBoolean isSucceed = new AtomicBoolean(false);
