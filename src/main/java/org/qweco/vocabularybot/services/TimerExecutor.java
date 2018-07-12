@@ -66,6 +66,23 @@ public class TimerExecutor {
         }
     }
 
+    public void test(CustomTimerTask task){
+        BotLogger.warn(LOGTAG, "Posting new task" + task.getTaskName());
+        final Runnable taskWrapper = () -> {
+            try {
+                task.execute();
+                task.reduceTimes();
+                test(task);
+            } catch (Exception e) {
+                BotLogger.severe(LOGTAG, "Bot threw an unexpected exception at TimerExecutor", e);
+            }
+        };
+        if (task.getTimes() != 0) {
+            final long delay = 30;
+            executorService.schedule(taskWrapper, delay, TimeUnit.SECONDS);
+        }
+    }
+
     /**
      * Find out next daily execution
      *

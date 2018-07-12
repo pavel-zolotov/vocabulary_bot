@@ -22,24 +22,25 @@ import org.telegram.telegrambots.api.objects.CallbackQuery;
 import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.api.objects.Update;
 import org.telegram.telegrambots.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
 import org.telegram.telegrambots.exceptions.TelegramApiRequestException;
-import org.telegram.telegrambots.logging.BotLogger;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.FileSystemException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.annotation.Nullable;
 
 public class Bot extends TelegramLongPollingBot {
     final private static String PHRASE_ADD_DATA = "add_to_vocabulary";
@@ -63,8 +64,14 @@ public class Bot extends TelegramLongPollingBot {
 
     private Bot(){
         super();
+        TimerExecutor.getInstance().test(new CustomTimerTask("First day alert", -1) {
+            @Override
+            public void execute() {
+                sendAlerts();
+            }
+        });
 
-        TimerExecutor.getInstance().startExecutionEveryDayAt(new CustomTimerTask("First day alert", -1) {
+        /*TimerExecutor.getInstance().startExecutionEveryDayAt(new CustomTimerTask("First day alert", -1) {
             @Override
             public void execute() {
                 sendAlerts();
@@ -83,7 +90,7 @@ public class Bot extends TelegramLongPollingBot {
             public void execute() {
                 sendAlerts();
             }
-        }, 20, 0, 0);
+        }, 20, 0, 0);*/
     }
 
     @Override
@@ -116,25 +123,28 @@ public class Bot extends TelegramLongPollingBot {
                 AnswerCallbackQuery answerCallbackQuery = new AnswerCallbackQuery();
 
                 String sourceText = callbackQuery.getMessage().getReplyToMessage().getText();
+                String lang = callbackQuery.getData().split(":")[1].split("-")[0]; //get the input lang
 
                 Phrase phrase = null;
                 if (!sourceText.trim().contains(" ")) { //is one word?
-                    String definition = Translator.getDefinitions(callbackQuery.getData().split(":")[1], sourceText.trim());
+                    String definition = Translator.getDefinitions(lang, sourceText.trim());
                     if (!definition.equals("")) {
                         phrase = new Phrase(sourceText,
                                 callbackQuery.getMessage().getText(),
-                                definition);
+                                definition,
+                                lang, 0, 0, true);
                     }
                 }
 
                 if (phrase == null){
                     phrase = new Phrase(callbackQuery.getMessage().getReplyToMessage().getText(),
-                            callbackQuery.getMessage().getText());
+                            callbackQuery.getMessage().getText(),
+                            lang, 0, 0, true);
                 }
 
                 try {
                     //save phrase to DB
-                    savePhrase(phrase, callbackQuery.getFrom().getId());
+                    savePhrase(phrase, callbackQuery.getFrom().getId().toString());
 
                     //edit message's buttons
                     EditMessageReplyMarkup replyMarkup = new EditMessageReplyMarkup();
@@ -156,9 +166,11 @@ public class Bot extends TelegramLongPollingBot {
 
                 try {
                     //remove phrase from DB
-                    removePhrase(callbackQuery.getData().split(":")[1], callbackQuery.getFrom().getId());
+                    removePhrase(callbackQuery.getData().split(":")[1],
+                            callbackQuery.getData().split(":")[2],
+                            callbackQuery.getFrom().getId().toString());
 
-                    ArrayList<Phrase> phrases = loadPhrases(callbackQuery.getFrom().getId());
+                    ArrayList<Phrase> phrases = loadPhrases(callbackQuery.getFrom().getId().toString());
 
                     //edit phrases list
                     EditMessageText messageText = new EditMessageText();
@@ -217,7 +229,7 @@ public class Bot extends TelegramLongPollingBot {
                 replyKeyboardMarkup.setResizeKeyboard(true);
                 List<KeyboardRow> keyboard = new ArrayList<>();
                 KeyboardRow row1 = new KeyboardRow();
-                row1.add(SETTINGS_ALERT_INTERVAL_COMMAND);
+                //row1.add(SETTINGS_ALERT_INTERVAL_COMMAND); //TODO
                 row1.add(SETTINGS_ALERT_SCOPE_COMMAND);
                 keyboard.add(row1);
                 KeyboardRow row2 = new KeyboardRow();
@@ -245,7 +257,7 @@ public class Bot extends TelegramLongPollingBot {
             }
             case PHRASE_SHOW_COMMAND:
                 try {
-                    ArrayList<Phrase> phrases = loadPhrases(msg.getFrom().getId());
+                    ArrayList<Phrase> phrases = loadPhrases(msg.getFrom().getId().toString());
                     s.enableMarkdown(true);
                     s.setText(buildPhrasesListMessageText(phrases));
                     s.setReplyMarkup(buildPhrasesListMessageReplyMarkup(phrases));
@@ -281,7 +293,7 @@ public class Bot extends TelegramLongPollingBot {
                     List<InlineKeyboardButton> row = new ArrayList<>();
                     InlineKeyboardButton button = new InlineKeyboardButton();
                     button.setText("➕ Add to vocabulary");
-                    button.setCallbackData(PHRASE_ADD_DATA+":"+lang);
+                    button.setCallbackData(PHRASE_ADD_DATA+":"+data[1]);
                     row.add(button);
                     rows.add(row);
                     inlineKeyboardMarkup.setKeyboard(rows);
@@ -304,26 +316,14 @@ public class Bot extends TelegramLongPollingBot {
     }
 
 
-    private void savePhrase (Phrase phrase, int userId) throws DatabaseConnectionException {
+    private void savePhrase (Phrase phrase, String userId) throws DatabaseConnectionException {
         try {
-            // Fetch the service account key JSON file contents
-            FileInputStream serviceAccount = new FileInputStream("vocabulary-bot-firebase-adminsdk-nopvk-fa58da275b.json");
-
-            // Initialize the app with a custom auth variable, limiting the server's access
-            Map<String, Object> auth = new HashMap<>();
-            auth.put("uid", String.valueOf(userId));
-
-            FirebaseOptions options = new FirebaseOptions.Builder()
-                    .setCredentials(GoogleCredentials.fromStream(serviceAccount))
-                    .setDatabaseUrl("https://vocabulary-bot.firebaseio.com/")
-                    .setDatabaseAuthVariableOverride(auth)
-                    .build();
-            FirebaseApp.initializeApp(options);
+            initializeFirebase(userId);
 
             // The app only has access as defined in the Security Rules
             DatabaseReference ref = FirebaseDatabase
                     .getInstance()
-                    .getReference("users").child(String.valueOf(userId)).child("en-ru"); //TODO change lang path
+                    .getReference("users").child(userId).child(phrase.lang);
 
             // Generate a reference to a new location and add some data using push()
             DatabaseReference pushedRef = ref.push();
@@ -349,43 +349,25 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
-    private ArrayList<Phrase> loadPhrases (int userId) throws DatabaseConnectionException {
+    private ArrayList<Phrase> loadPhrases (String userId) throws DatabaseConnectionException {
         try {
             ArrayList<Phrase> results = new ArrayList<>();
 
-            // Fetch the service account key JSON file contents
-            FileInputStream serviceAccount = new FileInputStream("vocabulary-bot-firebase-adminsdk-nopvk-fa58da275b.json");
-
-            // Initialize the app with a custom auth variable, limiting the server's access
-            Map<String, Object> auth = new HashMap<>();
-            auth.put("uid", String.valueOf(userId));
-
-            FirebaseOptions options = new FirebaseOptions.Builder()
-                    .setCredentials(GoogleCredentials.fromStream(serviceAccount))
-                    .setDatabaseUrl("https://vocabulary-bot.firebaseio.com/")
-                    .setDatabaseAuthVariableOverride(auth)
-                    .build();
-            FirebaseApp.initializeApp(options);
+            initializeFirebase(userId);
 
             // The app only has access as defined in the Security Rules
             DatabaseReference ref = FirebaseDatabase
                     .getInstance()
-                    .getReference("users").child(String.valueOf(userId)).child("en-ru"); //TODO change lang path
+                    .getReference("users").child(userId);
 
             CountDownLatch done = new CountDownLatch(1);
             final AtomicBoolean isSucceed = new AtomicBoolean(false);
             ref.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
-                    for (DataSnapshot phrase : dataSnapshot.getChildren()) {
-                        String id = phrase.getKey();
-                        String source = phrase.child("source").getValue().toString();
-                        String translation = phrase.child("translation").getValue().toString();
-                        if (phrase.hasChild("definition")) {
-                            String definition = phrase.child("definition").getValue().toString();
-                            results.add(new Phrase(id, source, translation, definition));
-                        }else {
-                            results.add(new Phrase(id, source, translation, null));
+                    for (DataSnapshot lang : dataSnapshot.getChildren()) {
+                        for (DataSnapshot phrase : lang.getChildren()) {
+                            results.add(dataSnapshot2Phrase(phrase, lang.getKey()));
                         }
                     }
                     isSucceed.set(true);
@@ -410,26 +392,66 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
-    private void removePhrase (String phraseId, int userId) throws DatabaseConnectionException {
+    /*private ArrayList<Phrase> loadAllUsersPhrases (int limit) throws DatabaseConnectionException {
         try {
-            // Fetch the service account key JSON file contents
-            FileInputStream serviceAccount = new FileInputStream("vocabulary-bot-firebase-adminsdk-nopvk-fa58da275b.json");
+            ArrayList<Phrase> results = new ArrayList<>();
 
-            // Initialize the app with a custom auth variable, limiting the server's access
-            Map<String, Object> auth = new HashMap<>();
-            auth.put("uid", String.valueOf(userId));
+            initializeFirebase(null);
 
-            FirebaseOptions options = new FirebaseOptions.Builder()
-                    .setCredentials(GoogleCredentials.fromStream(serviceAccount))
-                    .setDatabaseUrl("https://vocabulary-bot.firebaseio.com/")
-                    .setDatabaseAuthVariableOverride(auth)
-                    .build();
-            FirebaseApp.initializeApp(options);
+            // The app only has access as defined in the Security Rules
+            DatabaseReference ref = FirebaseDatabase
+                        .getInstance()
+                        .getReference("users");
+
+            CountDownLatch done = new CountDownLatch(1);
+            final AtomicBoolean isSucceed = new AtomicBoolean(false);
+            ref.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    for (DataSnapshot user : dataSnapshot.getChildren()) {
+                        user.child("wordScope").getValue();
+                        for (DataSnapshot lang : user.getChildren()) {
+                            for (DataSnapshot phrase : lang.getChildren()) {
+                                results.add(dataSnapshot2Phrase(phrase, lang.getKey()));
+                            }
+                        }
+                    }
+
+                    isSucceed.set(true);
+                    done.countDown();
+                }
+
+                @Override
+                public void onCancelled(DatabaseError error) {
+                    error.toException().printStackTrace();
+                    done.countDown();
+                }
+            });
+            done.await();
+
+            // sort by repeats and delete all over limit
+            results.sort(Comparator.comparingInt(phrase -> phrase.repeats));
+            results.removeIf((phrase -> results.indexOf(phrase) > limit));
+
+            FirebaseApp.getInstance().delete();
+            if (!isSucceed.get()){
+                throw new DatabaseConnectionException();
+            }
+            return results;
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }*/
+
+    private void removePhrase (String phraseId, String phraseLang, String userId) throws DatabaseConnectionException {
+        try {
+            initializeFirebase(userId);
 
             // The app only has access as defined in the Security Rules
             DatabaseReference ref = FirebaseDatabase
                     .getInstance()
-                    .getReference("users").child(String.valueOf(userId)).child("en-ru").child(phraseId); //TODO change lang path
+                    .getReference("users").child(userId).child(phraseLang).child(phraseId);
 
             CountDownLatch done = new CountDownLatch(1);
             final AtomicBoolean isSucceed = new AtomicBoolean(false);
@@ -453,6 +475,72 @@ public class Bot extends TelegramLongPollingBot {
     }
 
     private void sendAlerts() {
+        try {
+            initializeFirebase(null);
+
+            // The app only has access as defined in the Security Rules
+            DatabaseReference ref = FirebaseDatabase
+                    .getInstance()
+                    .getReference("users");
+
+            CountDownLatch done = new CountDownLatch(1);
+            ref.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    for (DataSnapshot user : dataSnapshot.getChildren()) {
+                        ArrayList<Phrase> results = new ArrayList<>();
+                        int limit = Integer.valueOf(user.child("wordScope").getValue().toString());
+
+                        // load all phrases
+                        for (DataSnapshot lang : user.getChildren()) {
+                            for (DataSnapshot phrase : lang.getChildren()) {
+                                results.add(dataSnapshot2Phrase(phrase, lang.getKey()));
+                            }
+                        }
+
+                        // delete disabled, sort by repeats and delete all over limit
+                        results.removeIf((phrase -> !phrase.enabled));
+                        results.sort(Comparator.comparingInt(phrase -> phrase.repeats));
+                        results.removeIf((phrase -> results.indexOf(phrase) > limit));
+
+                        // send message for every phrase and increase repeat amount in DB
+                        results.forEach(phrase -> {
+                            SendMessage sendMessage = new SendMessage();
+                            sendMessage.enableMarkdown(true);
+                            sendMessage.setChatId(user.getKey());
+                            String text = "Time to repeat new words:\n";
+                            text += "• "+phrase.source+"\n";
+                            if (phrase.definition != null){
+                                text = phrase.definition + "\n\n";
+                            }
+                            text += "_"+phrase.translation+"_";
+                            sendMessage.setText(text);
+                            try {
+                                execute(sendMessage);
+                            } catch (TelegramApiException e) {
+                                e.printStackTrace();
+                            }
+
+                            user.child(phrase.lang).child(phrase.id).child("repeats").getRef().setValueAsync(phrase.repeats+1);
+                        });
+                    }
+
+                    done.countDown();
+                }
+
+                @Override
+                public void onCancelled(DatabaseError error) {
+                    error.toException().printStackTrace();
+                    done.countDown();
+                }
+            });
+            done.await();
+            FirebaseApp.getInstance().delete();
+        }catch (IOException | InterruptedException e){
+            e.printStackTrace();
+        }
+
+
         /*List<Phrase> phrases = loadPhrases();
         for (Phrase phrase : sendAlerts) {
             synchronized (Thread.currentThread()) {
@@ -488,8 +576,19 @@ public class Bot extends TelegramLongPollingBot {
         } else {
             StringBuilder stringBuilder = new StringBuilder();
             for (Phrase phrase : phrases) {
-                stringBuilder.append(phrases.indexOf(phrase)+1).append(". ")
-                        .append("*").append(phrase.source).append("*\n_")
+                if (phrases.indexOf(phrase) == 0 || !phrases.get(phrases.indexOf(phrase) - 1).lang.equals(phrase.lang)){
+                    String langFrom = phrase.lang.split("-")[0];
+                    String langTo = phrase.lang.split("-")[1];
+                    stringBuilder.append(countryCode2EmojiFlag(langFrom))
+                            .append(" → ")
+                            .append(countryCode2EmojiFlag(langTo));
+                }
+
+                stringBuilder.append(phrases.indexOf(phrase)+1).append(". ");
+                if (!phrase.enabled){
+                    stringBuilder.append("✓ ");
+                }
+                stringBuilder.append("*").append(phrase.source).append("*\n_")
                         .append(phrase.translation).append("_\n\n");
             }
 
@@ -508,13 +607,57 @@ public class Bot extends TelegramLongPollingBot {
                 List<InlineKeyboardButton> row = new ArrayList<>();
                 InlineKeyboardButton buttonRemove = new InlineKeyboardButton();
                 buttonRemove.setText(phrases.indexOf(phrase)+1 + ". ❌");
-                buttonRemove.setCallbackData(PHRASE_REMOVE_DATA+":"+phrase.id);
+                buttonRemove.setCallbackData(PHRASE_REMOVE_DATA+":"+phrase.id+":"+phrase.lang);
                 row.add(buttonRemove);
                 rows.add(row);
             }
             inlineKeyboardMarkup.setKeyboard(rows);
             return inlineKeyboardMarkup;
         }
+    }
+
+    private Phrase dataSnapshot2Phrase (DataSnapshot dataSnapshot, String lang){
+        String id = dataSnapshot.getKey();
+        String source = dataSnapshot.child("source").getValue().toString();
+        String translation = dataSnapshot.child("translation").getValue().toString();
+        int repeats = Integer.valueOf(dataSnapshot.child("repeats").getValue().toString());
+        int correctAnswers = Integer.valueOf(dataSnapshot.child("correctAnswers").getValue().toString());
+        boolean enabled = Boolean.parseBoolean(dataSnapshot.child("enabled").getValue().toString());
+
+        if (dataSnapshot.hasChild("definition")) {
+            String definition = dataSnapshot.child("definition").getValue().toString();
+            return new Phrase(id, source, translation, definition, lang, repeats, correctAnswers, enabled);
+        }else {
+            return new Phrase(id, source, translation, null, lang, repeats, correctAnswers, enabled);
+        }
+    }
+
+    private void initializeFirebase (@Nullable String uid) throws IOException {
+        // Fetch the service account key JSON file contents
+        FileInputStream serviceAccount = new FileInputStream("vocabulary-bot-firebase-adminsdk-nopvk-fa58da275b.json");
+
+        FirebaseOptions.Builder options = new FirebaseOptions.Builder()
+                .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+                .setDatabaseUrl("https://vocabulary-bot.firebaseio.com/");
+
+        if (uid != null){
+            // Initialize the app with a custom auth variable, limiting the server's access
+            Map<String, Object> auth = new HashMap<>();
+            auth.put("uid", uid);
+            options.setDatabaseAuthVariableOverride(auth);
+        }
+
+        FirebaseApp.initializeApp(options.build());
+    }
+
+    private String countryCode2EmojiFlag (String country){
+        int flagOffset = 0x1F1E6;
+        int asciiOffset = 0x41;
+
+        int firstChar = Character.codePointAt(country, 0) - asciiOffset + flagOffset;
+        int secondChar = Character.codePointAt(country, 1) - asciiOffset + flagOffset;
+
+        return new String(Character.toChars(firstChar)) + new String(Character.toChars(secondChar));
     }
 
     private class DatabaseConnectionException extends Exception{}
