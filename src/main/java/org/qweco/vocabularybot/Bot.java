@@ -428,11 +428,11 @@ public class Bot extends TelegramLongPollingBot {
 
     private void sendAlerts() {
         try {
-            initializeFirebase(null, "alerts");
+            FirebaseApp app = initializeFirebase(null, "alerts");
 
             // The app only has access as defined in the Security Rules
             DatabaseReference ref = FirebaseDatabase
-                    .getInstance("alerts")
+                    .getInstance(app)
                     .getReference("users");
 
             CountDownLatch done = new CountDownLatch(1);
@@ -487,7 +487,7 @@ public class Bot extends TelegramLongPollingBot {
                 }
             });
             done.await();
-            FirebaseApp.getInstance("alerts").delete();
+            app.delete();
         }catch (IOException | InterruptedException e){
             e.printStackTrace();
         }
@@ -556,7 +556,7 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
-    private void initializeFirebase (@Nullable String uid, @Nullable String name) throws IOException {
+    private FirebaseApp initializeFirebase (@Nullable String uid, @Nullable String name) throws IOException {
         // Fetch the service account key JSON file contents
         FileInputStream serviceAccount = new FileInputStream("vocabulary-bot-firebase-adminsdk-nopvk-fa58da275b.json");
 
@@ -572,9 +572,9 @@ public class Bot extends TelegramLongPollingBot {
         }
 
         if (name != null){
-            FirebaseApp.initializeApp(options.build(), name);
+            return FirebaseApp.initializeApp(options.build(), name);
         }else {
-            FirebaseApp.initializeApp(options.build());
+            return FirebaseApp.initializeApp(options.build());
         }
     }
 
