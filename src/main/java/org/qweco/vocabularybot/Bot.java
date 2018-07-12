@@ -428,7 +428,6 @@ public class Bot extends TelegramLongPollingBot {
     }
 
     private void sendAlerts() {
-        BotLogger.warn("test","now");
         try {
             FirebaseApp app = initializeFirebase(null, "alerts");
 
@@ -436,17 +435,17 @@ public class Bot extends TelegramLongPollingBot {
             DatabaseReference ref = FirebaseDatabase
                     .getInstance(app)
                     .getReference("users");
-            BotLogger.warn("test","now2");
 
             CountDownLatch done = new CountDownLatch(1);
             ref.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
-                    BotLogger.warn("test","now3");
-                    BotLogger.warn("test", String.valueOf(dataSnapshot.getChildrenCount()));
                     for (DataSnapshot user : dataSnapshot.getChildren()) {
                         ArrayList<Phrase> results = new ArrayList<>();
-                        int limit = Integer.valueOf(user.child("wordScope").getValue().toString());
+                        int limit = 3;
+                        if (user.hasChild("wordScope")){
+                            limit = Integer.valueOf(user.child("wordScope").getValue().toString());
+                        }
 
                         // load all phrases
                         for (DataSnapshot lang : user.getChildren()) {
@@ -455,19 +454,13 @@ public class Bot extends TelegramLongPollingBot {
                             }
                         }
 
-                        BotLogger.warn("test", String.valueOf(results.size()));
-
                         // delete disabled, sort by repeats and delete all over limit
                         results.removeIf((phrase -> !phrase.enabled));
                         results.sort(Comparator.comparingInt(phrase -> phrase.repeats));
                         results.removeIf((phrase -> results.indexOf(phrase) > limit));
 
-                        BotLogger.warn("test", String.valueOf(results.size()));
-
                         // send message for every phrase and increase repeat amount in DB
                         results.forEach(phrase -> {
-                            BotLogger.warn("test", String.valueOf(phrase.id));
-
                             SendMessage sendMessage = new SendMessage();
                             sendMessage.enableMarkdown(true);
                             sendMessage.setChatId(user.getKey());
@@ -483,14 +476,11 @@ public class Bot extends TelegramLongPollingBot {
                             } catch (TelegramApiException e) {
                                 e.printStackTrace();
                             }
-                            BotLogger.warn("test", "done");
 
                             user.child(phrase.lang).child(phrase.id).child("repeats").getRef().setValueAsync(phrase.repeats+1);
-                            BotLogger.warn("test", "done2");
                         });
                     }
 
-                    BotLogger.warn("test", "done all");
                     done.countDown();
                 }
 
@@ -501,7 +491,6 @@ public class Bot extends TelegramLongPollingBot {
                 }
             });
             done.await();
-            BotLogger.warn("test", "done all2");
             app.delete();
         }catch (IOException | InterruptedException e){
             e.printStackTrace();
