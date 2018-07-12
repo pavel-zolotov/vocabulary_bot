@@ -329,6 +329,9 @@ public class Bot extends TelegramLongPollingBot {
             // Generate a reference to a new location and add some data using push()
             DatabaseReference pushedRef = ref.push();
 
+            // delete lang data as it's already presented in path
+            phrase.lang = null;
+
             CountDownLatch done = new CountDownLatch(1);
             final AtomicBoolean isSucceed = new AtomicBoolean(false);
             pushedRef.setValue(phrase, (DatabaseError error, DatabaseReference reference) -> {
