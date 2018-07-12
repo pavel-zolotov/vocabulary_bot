@@ -496,7 +496,7 @@ public class Bot extends TelegramLongPollingBot {
 
             CountDownLatch done = new CountDownLatch(1);
             final AtomicBoolean isSucceed = new AtomicBoolean(false);
-            ref.setValue(true, (error, ref1) -> {
+            ref.setValue(false, (error, ref1) -> {
                 if (error == null){
                     isSucceed.set(true);
                 }else{
