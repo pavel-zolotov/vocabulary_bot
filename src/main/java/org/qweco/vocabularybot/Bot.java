@@ -428,6 +428,7 @@ public class Bot extends TelegramLongPollingBot {
     }
 
     private void sendAlerts() {
+        BotLogger.warn("test","now");
         try {
             FirebaseApp app = initializeFirebase(null, "alerts");
 
@@ -435,11 +436,13 @@ public class Bot extends TelegramLongPollingBot {
             DatabaseReference ref = FirebaseDatabase
                     .getInstance(app)
                     .getReference("users");
+            BotLogger.warn("test","now2");
 
             CountDownLatch done = new CountDownLatch(1);
             ref.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
+                    BotLogger.warn("test","now3");
                     for (DataSnapshot user : dataSnapshot.getChildren()) {
                         ArrayList<Phrase> results = new ArrayList<>();
                         int limit = Integer.valueOf(user.child("wordScope").getValue().toString());
