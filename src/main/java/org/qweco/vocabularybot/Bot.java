@@ -453,6 +453,8 @@ public class Bot extends TelegramLongPollingBot {
                             limit = 3;
                         }
 
+                        BotLogger.warn("test", "lll");
+
                         // load all phrases
                         for (DataSnapshot lang : user.getChildren()) {
                             for (DataSnapshot phrase : lang.getChildren()) {
@@ -460,6 +462,7 @@ public class Bot extends TelegramLongPollingBot {
                             }
                         }
 
+                        BotLogger.warn("test", "llllllll");
                         BotLogger.warn("test", String.valueOf(results.size()));
 
                         // delete disabled, sort by repeats and delete all over limit
