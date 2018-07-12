@@ -46,6 +46,7 @@ import javax.annotation.Nullable;
 public class Bot extends TelegramLongPollingBot {
     final private static String PHRASE_ADD_DATA = "add_to_vocabulary";
     final private static String PHRASE_REMOVE_DATA = "remove_from_vocabulary";
+    final private static String PHRASE_LEARNED_DATA = "learned";
     final private static String PHRASE_SHOW_COMMAND = "📑 Show vocabulary";
     final private static String SETTINGS_COMMAND = "⚙ Settings";
     final private static String SETTINGS_LANG_COMMAND = "🌐 Target language";
@@ -187,6 +188,30 @@ public class Bot extends TelegramLongPollingBot {
                     replyMarkup.setMessageId(callbackQuery.getMessage().getMessageId());
                     replyMarkup.setChatId(callbackQuery.getMessage().getChatId());
                     replyMarkup.setReplyMarkup(buildPhrasesListMessageReplyMarkup(phrases));
+                    execute(replyMarkup);
+
+                    answerCallbackQuery.setText("✔ Done");
+                }catch (DatabaseConnectionException e){
+                    answerCallbackQuery.setText("⚠ Something went wrong. Try again later.");
+                }
+
+                //send an answer
+                answerCallbackQuery.setCallbackQueryId(callbackQuery.getId());
+                execute(answerCallbackQuery);
+            }else if(callbackQuery.getData().startsWith(PHRASE_LEARNED_DATA)){
+                //create an answer
+                AnswerCallbackQuery answerCallbackQuery = new AnswerCallbackQuery();
+
+                try {
+                    //remove phrase from DB
+                    learnPhrase(callbackQuery.getData().split(":")[1],
+                            callbackQuery.getData().split(":")[2],
+                            callbackQuery.getFrom().getId().toString());
+
+                    //edit message's buttons
+                    EditMessageReplyMarkup replyMarkup = new EditMessageReplyMarkup();
+                    replyMarkup.setMessageId(callbackQuery.getMessage().getMessageId());
+                    replyMarkup.setChatId(callbackQuery.getMessage().getChatId());
                     execute(replyMarkup);
 
                     answerCallbackQuery.setText("✔ Done");
@@ -460,6 +485,36 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
+    private void learnPhrase (String phraseId, String phraseLang, String userId) throws DatabaseConnectionException {
+        try {
+            initializeFirebase(userId, null);
+
+            // The app only has access as defined in the Security Rules
+            DatabaseReference ref = FirebaseDatabase
+                    .getInstance()
+                    .getReference("users").child(userId).child(phraseLang).child(phraseId);
+
+            CountDownLatch done = new CountDownLatch(1);
+            final AtomicBoolean isSucceed = new AtomicBoolean(false);
+            ref.setValue(true, (error, ref1) -> {
+                if (error == null){
+                    isSucceed.set(true);
+                }else{
+                    error.toException().printStackTrace();
+                }
+                done.countDown();
+            });
+
+            done.await();
+            FirebaseApp.getInstance().delete();
+            if (!isSucceed.get()){
+                throw new DatabaseConnectionException();
+            }
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
     private void sendAlerts() {
         try {
             FirebaseApp app = initializeFirebase(null, "alerts");
@@ -509,6 +564,19 @@ public class Bot extends TelegramLongPollingBot {
                                 text += phrase.definition + "\n";
                             }
                             sendMessage.setText(text);
+
+                            //quick action buttons
+                            InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+                            List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+                            List<InlineKeyboardButton> row = new ArrayList<>();
+                            InlineKeyboardButton button = new InlineKeyboardButton();
+                            button.setText("✔ Learned");
+                            button.setCallbackData(PHRASE_LEARNED_DATA+":"+phrase.id+":"+phrase.lang);
+                            row.add(button);
+                            rows.add(row);
+                            inlineKeyboardMarkup.setKeyboard(rows);
+                            sendMessage.setReplyMarkup(inlineKeyboardMarkup);
+
                             try {
                                 execute(sendMessage);
                             } catch (TelegramApiException e) {
