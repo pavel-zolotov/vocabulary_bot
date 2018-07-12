@@ -4,6 +4,7 @@ import org.apache.commons.io.IOUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.qweco.vocabularybot.BotConfig;
+import org.telegram.telegrambots.logging.BotLogger;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -59,6 +60,7 @@ public class Translator {
                 for (int i1 = 0; i1 < entries.length(); i1++){
                     JSONArray senses = entries.getJSONObject(i1).getJSONArray("senses");
                     for (int i2 = 0; i2 < senses.length(); i2++) {
+                        BotLogger.warn("test", builder.toString());
                         String definition = senses.getJSONObject(i2).getJSONArray("definitions").getString(0);
                         builder.append("• " + definition + "\n");
                     }

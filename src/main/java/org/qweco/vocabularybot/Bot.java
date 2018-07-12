@@ -536,7 +536,7 @@ public class Bot extends TelegramLongPollingBot {
                 }
             });
             done.await();
-            FirebaseApp.getInstance().delete();
+            FirebaseApp.getInstance("alerts").delete();
         }catch (IOException | InterruptedException e){
             e.printStackTrace();
         }
