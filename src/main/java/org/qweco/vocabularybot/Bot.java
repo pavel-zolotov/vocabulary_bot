@@ -443,6 +443,7 @@ public class Bot extends TelegramLongPollingBot {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
                     BotLogger.warn("test","now3");
+                    BotLogger.warn("test", String.valueOf(dataSnapshot.getChildrenCount()));
                     for (DataSnapshot user : dataSnapshot.getChildren()) {
                         ArrayList<Phrase> results = new ArrayList<>();
                         int limit = Integer.valueOf(user.child("wordScope").getValue().toString());
