@@ -66,7 +66,7 @@ public class TimerExecutor {
         }
     }
 
-    public void test(CustomTimerTask task){
+    /*public void test(CustomTimerTask task){
         BotLogger.warn(LOGTAG, "Posting new task" + task.getTaskName());
         final Runnable taskWrapper = () -> {
             try {
@@ -81,7 +81,7 @@ public class TimerExecutor {
             final long delay = 60;
             executorService.schedule(taskWrapper, delay, TimeUnit.SECONDS);
         }
-    }
+    }*/
 
     /**
      * Find out next daily execution

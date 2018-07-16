@@ -57,13 +57,6 @@ public class TelegramBot extends TelegramLongPollingBot{
     private TelegramBot(){
         super();
 
-        TimerExecutor.getInstance().test(new CustomTimerTask("First day alert", -1) {
-            @Override
-            public void execute() {
-                sendAlerts();
-            }
-        });
-
         TimerExecutor.getInstance().startExecutionEveryDayAt(new CustomTimerTask("First day alert", -1) {
             @Override
             public void execute() {
@@ -286,12 +279,15 @@ public class TelegramBot extends TelegramLongPollingBot{
                 replyKeyboardMarkup.setResizeKeyboard(true);
                 List<KeyboardRow> keyboard = new ArrayList<>();
 
+                KeyboardRow row1 = new KeyboardRow();
+                row1.add(SETTINGS_ALERT_SCOPE_COMMAND_1);
+                row1.add(SETTINGS_ALERT_SCOPE_COMMAND_3);
+                row1.add(SETTINGS_ALERT_SCOPE_COMMAND_5);
+                keyboard.add(row1);
 
-                KeyboardRow row = new KeyboardRow();
-                row.add(SETTINGS_ALERT_SCOPE_COMMAND_1);
-                row.add(SETTINGS_ALERT_SCOPE_COMMAND_3);
-                row.add(SETTINGS_ALERT_SCOPE_COMMAND_5);
-                keyboard.add(row);
+                KeyboardRow row2 = new KeyboardRow();
+                row2.add(BACK_TO_SETTINGS_COMMAND);
+                keyboard.add(row2);
 
                 replyKeyboardMarkup.setKeyboard(keyboard);
                 s.setReplyMarkup(replyKeyboardMarkup);
