@@ -252,7 +252,7 @@ public class TelegramBot extends TelegramLongPollingBot{
 
                 try {
                     Translator.getSupportedLanguages("en").forEach((String lang) -> {
-                        if (keyboard.get(keyboard.size() - 1).size() < 3) {
+                        if (keyboard.size() != 0 && keyboard.get(keyboard.size() - 1).size() < 3) {
                             keyboard.get(keyboard.size() - 1).add(BotUtils.countryCode2EmojiFlag(lang)+ " " + lang);
                         } else {
                             KeyboardRow row = new KeyboardRow();
