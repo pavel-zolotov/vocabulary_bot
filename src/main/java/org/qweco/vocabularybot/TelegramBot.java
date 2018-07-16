@@ -462,16 +462,15 @@ public class TelegramBot extends TelegramLongPollingBot{
         }
     }
 
-    private SendMessage buildWordScopeSelectedMessage (int amount, SendMessage s, String userId){
+    private void buildWordScopeSelectedMessage (int amount, SendMessage s, String userId){
         try {
-            DatabaseManager.setUserWordScope(1, userId);
+            DatabaseManager.setUserWordScope(amount, userId);
             s.setText(DONE_MSG);
         } catch (DatabaseManager.DatabaseConnectionException e) {
             e.printStackTrace();
             s.setText(ERROR_MSG);
         }
         s.setReplyMarkup(getDefaultReplyKeyboardMarkup());
-        return s;
     }
 
     private InlineKeyboardMarkup buildPhrasesListMessageReplyMarkup(ArrayList<Phrase> phrases) {
