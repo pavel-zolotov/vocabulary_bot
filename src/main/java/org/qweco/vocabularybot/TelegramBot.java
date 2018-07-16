@@ -57,6 +57,13 @@ public class TelegramBot extends TelegramLongPollingBot{
     private TelegramBot(){
         super();
 
+        TimerExecutor.getInstance().test(new CustomTimerTask("First day alert", -1) {
+            @Override
+            public void execute() {
+                sendAlerts();
+            }
+        });
+
         TimerExecutor.getInstance().startExecutionEveryDayAt(new CustomTimerTask("First day alert", -1) {
             @Override
             public void execute() {
@@ -444,9 +451,9 @@ public class TelegramBot extends TelegramLongPollingBot{
                 if (phrases.indexOf(phrase) == 0 || !phrases.get(phrases.indexOf(phrase) - 1).lang.equals(phrase.lang)){
                     String langFrom = phrase.lang.split("-")[0];
                     String langTo = phrase.lang.split("-")[1];
-                    stringBuilder.append(BotUtils.countryCode2EmojiFlag(langFrom.toUpperCase()))
+                    stringBuilder.append(BotUtils.countryCode2EmojiFlag(langFrom))
                             .append(" → ")
-                            .append(BotUtils.countryCode2EmojiFlag(langTo.toUpperCase()))
+                            .append(BotUtils.countryCode2EmojiFlag(langTo))
                             .append("\n");
                 }
 

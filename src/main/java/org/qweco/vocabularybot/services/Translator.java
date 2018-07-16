@@ -3,14 +3,10 @@ package org.qweco.vocabularybot.services;
 import org.apache.commons.io.IOUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.json.JSONString;
 import org.qweco.vocabularybot.BotConfig;
-import org.telegram.telegrambots.logging.BotLogger;
 
-import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
