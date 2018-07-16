@@ -3,6 +3,7 @@ package org.qweco.vocabularybot.services;
 import org.apache.commons.io.IOUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.json.JSONString;
 import org.qweco.vocabularybot.BotConfig;
 import org.telegram.telegrambots.logging.BotLogger;
 
@@ -12,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -36,6 +38,21 @@ public class Translator {
         String[] result = new String[2];
         result[0] = jsonResponse.getJSONArray("text").getString(0); //translation
         result[1] = jsonResponse.getString("lang"); //lang
+        return result;
+    }
+
+    public static ArrayList<String> getSupportedLanguages(String UiLang) throws IOException {
+        String urlStr = "https://translate.yandex.net/api/v1.5/tr.json/getLangs?key="+YANDEX_API_KEY+"&ui="+UiLang;
+        URL urlObj = new URL(urlStr);
+        HttpsURLConnection connection = (HttpsURLConnection)urlObj.openConnection();
+        connection.setRequestMethod("POST");
+        connection.setDoOutput(true);
+
+        // read the output from the server
+        String response = IOUtils.toString(connection.getInputStream(), "UTF-8");
+        JSONObject jsonResponse = new JSONObject(response);
+        ArrayList<String> result = new ArrayList<>();
+        jsonResponse.getJSONObject("langs").keys().forEachRemaining(result::add);
         return result;
     }
 
