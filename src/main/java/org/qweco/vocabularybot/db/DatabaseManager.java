@@ -293,6 +293,7 @@ public class DatabaseManager {
                     done.countDown();
                 }
             });
+            //fjkrhg
 
             done.await();
             FirebaseApp.getInstance().delete();
